@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">شعار محكمة التنفيذ الافتراضية</title>
+  <desc id="desc">ميزان عدالة ذهبي على أرضية كحلية</desc>
+  <rect width="64" height="64" rx="14" fill="#102f3c"/>
+  <path d="M32 13v34M20 20h24M15 23l-7 15h14L15 23Zm34 0-7 15h14L49 23ZM22 49h20" fill="none" stroke="#c2964a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="32" cy="17" r="4" fill="#16827d"/>
+</svg>

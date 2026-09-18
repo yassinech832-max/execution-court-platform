@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#102f3c">
+  <meta name="description" content="منصة عربية تفاعلية لتعلّم التنفيذ الجبري من خلال الدروس والقضايا والأدوات التطبيقية.">
+  <title>محكمة التنفيذ الافتراضية</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main-content">تخطَّ إلى المحتوى</a>
+
+  <div class="app-shell" id="app-shell">
+    <header class="topbar">
+      <button class="icon-button mobile-only" id="menu-toggle" type="button" aria-label="فتح قائمة التنقل" aria-expanded="false" aria-controls="sidebar">
+        <span aria-hidden="true">☰</span>
+      </button>
+      <div class="brand-lockup" aria-label="محكمة التنفيذ الافتراضية">
+        <span class="brand-mark" aria-hidden="true">⚖</span>
+        <span>
+          <strong>محكمة التنفيذ الافتراضية</strong>
+          <small>من الحكم إلى تمام الوفاء</small>
+        </span>
+      </div>
+      <div class="topbar-actions">
+        <div class="compact-progress" aria-label="نسبة التقدم الكلية">
+          <span id="header-progress-label">٠٪</span>
+          <span class="progress-track" aria-hidden="true"><span id="header-progress-bar"></span></span>
+        </div>
+        <button class="icon-button" id="accessibility-toggle" type="button" aria-label="إعدادات الوصول" aria-expanded="false" aria-controls="accessibility-panel">أ</button>
+      </div>
+    </header>
+
+    <aside class="sidebar" id="sidebar" aria-label="التنقل الرئيس">
+      <nav>
+        <button class="nav-item active" type="button" data-view="home"><span aria-hidden="true">⌂</span><span>الرئيسية</span></button>
+        <button class="nav-item" type="button" data-view="map"><span aria-hidden="true">◇</span><span>خريطة المقرر</span></button>
+        <button class="nav-item" type="button" data-view="lessons"><span aria-hidden="true">§</span><span>الدروس</span></button>
+        <button class="nav-item" type="button" data-view="court"><span aria-hidden="true">⚖</span><span>المحكمة التفاعلية</span></button>
+        <button class="nav-item" type="button" data-view="tools"><span aria-hidden="true">⌘</span><span>مختبر الأدوات</span></button>
+        <button class="nav-item" type="button" data-view="glossary"><span aria-hidden="true">أب</span><span>قاموس المصطلحات</span></button>
+        <button class="nav-item" type="button" data-view="progress"><span aria-hidden="true">◎</span><span>تقدّمي</span></button>
+      </nav>
+      <div class="sidebar-note">
+        <span class="status-dot" aria-hidden="true"></span>
+        <strong>خصوصية كاملة</strong>
+        <p>يحفظ التقدم على هذا الجهاز فقط، ولا تُرسل أي بيانات.</p>
+      </div>
+      <div class="author-card">
+        <span>تحرير</span>
+        <strong>الدكتور يسين شامي</strong>
+        <small>أستاذ مساعد<br>كلية القانون، جامعة الإمارات</small>
+      </div>
+    </aside>
+
+    <div class="sidebar-backdrop" id="sidebar-backdrop" hidden></div>
+
+    <main id="main-content" tabindex="-1">
+      <div class="loading-state" aria-live="polite">جارٍ تجهيز منصة التعلّم…</div>
+    </main>
+  </div>
+
+  <section class="accessibility-panel" id="accessibility-panel" aria-label="إعدادات الوصول" hidden>
+    <div class="panel-heading">
+      <div><span class="eyebrow">تخصيص العرض</span><h2>إعدادات الوصول</h2></div>
+      <button class="icon-button" id="accessibility-close" type="button" aria-label="إغلاق إعدادات الوصول">×</button>
+    </div>
+    <div class="setting-row">
+      <div><strong>حجم النص</strong><small>غيّر الحجم دون فقدان المحتوى</small></div>
+      <div class="segmented-control" role="group" aria-label="حجم النص">
+        <button type="button" data-font="normal">عادي</button>
+        <button type="button" data-font="large">كبير</button>
+        <button type="button" data-font="xlarge">أكبر</button>
+      </div>
+    </div>
+    <label class="switch-row"><span><strong>تباين مرتفع</strong><small>وضوح أكبر للنص والحدود</small></span><input id="contrast-toggle" type="checkbox" role="switch"></label>
+    <label class="switch-row"><span><strong>تقليل الحركة</strong><small>تعطيل الانتقالات غير الضرورية</small></span><input id="motion-toggle" type="checkbox" role="switch"></label>
+  </section>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+  <noscript><div class="noscript">تحتاج المنصة إلى تفعيل JavaScript لتشغيل الأنشطة التفاعلية.</div></noscript>
+
+  <script src="content.js"></script>
+  <script src="logic.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

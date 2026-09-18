@@ -1,0 +1,19 @@
+{
+  "name": "محكمة التنفيذ الافتراضية",
+  "short_name": "محكمة التنفيذ",
+  "description": "منصة عربية تفاعلية لتعلم التنفيذ الجبري من خلال الدروس والمحاكاة والأدوات.",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f7f4ed",
+  "theme_color": "#102f3c",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
