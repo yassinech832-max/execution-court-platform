@@ -1,90 +1,282 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#102f3c">
-  <meta name="description" content="منصة عربية تفاعلية لتعلّم التنفيذ الجبري من خلال الدروس والقضايا والأدوات التطبيقية.">
-  <title>محكمة التنفيذ الافتراضية</title>
-  <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-  <a class="skip-link" href="#main-content">تخطَّ إلى المحتوى</a>
-
-  <div class="app-shell" id="app-shell">
-    <header class="topbar">
-      <button class="icon-button mobile-only" id="menu-toggle" type="button" aria-label="فتح قائمة التنقل" aria-expanded="false" aria-controls="sidebar">
-        <span aria-hidden="true">☰</span>
-      </button>
-      <div class="brand-lockup" aria-label="محكمة التنفيذ الافتراضية">
-        <span class="brand-mark" aria-hidden="true">⚖</span>
-        <span>
-          <strong>محكمة التنفيذ الافتراضية</strong>
-          <small>من الحكم إلى تمام الوفاء</small>
-        </span>
-      </div>
-      <div class="topbar-actions">
-        <div class="compact-progress" aria-label="نسبة التقدم الكلية">
-          <span id="header-progress-label">٠٪</span>
-          <span class="progress-track" aria-hidden="true"><span id="header-progress-bar"></span></span>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0c2340" />
+    <meta
+      name="description"
+      content="منصة تعليمية تفاعلية للمرافعات والتنفيذ الجبري، منجزة من طرف الدكتور ياسين شامي، كلية القانون، جامعة الإمارات العربية المتحدة."
+    />
+    <title>مختبر ياسين شامي | المرافعات والتنفيذ الجبري</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="app.js"></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar">
+        <div class="brand-lockup">
+          <div class="brand-mark" aria-hidden="true">ش</div>
+          <div>
+            <div class="brand-name">مختبر ياسين شامي</div>
+            <div class="brand-subtitle">المرافعات والتنفيذ الجبري</div>
+          </div>
         </div>
-        <button class="icon-button" id="accessibility-toggle" type="button" aria-label="إعدادات الوصول" aria-expanded="false" aria-controls="accessibility-panel">أ</button>
-      </div>
-    </header>
 
-    <aside class="sidebar" id="sidebar" aria-label="التنقل الرئيس">
-      <nav>
-        <button class="nav-item active" type="button" data-view="home"><span aria-hidden="true">⌂</span><span>الرئيسية</span></button>
-        <button class="nav-item" type="button" data-view="map"><span aria-hidden="true">◇</span><span>خريطة المقرر</span></button>
-        <button class="nav-item" type="button" data-view="lessons"><span aria-hidden="true">§</span><span>الدروس</span></button>
-        <button class="nav-item" type="button" data-view="court"><span aria-hidden="true">⚖</span><span>المحكمة التفاعلية</span></button>
-        <button class="nav-item" type="button" data-view="tools"><span aria-hidden="true">⌘</span><span>مختبر الأدوات</span></button>
-        <button class="nav-item" type="button" data-view="glossary"><span aria-hidden="true">أب</span><span>قاموس المصطلحات</span></button>
-        <button class="nav-item" type="button" data-view="progress"><span aria-hidden="true">◎</span><span>تقدّمي</span></button>
-      </nav>
-      <div class="sidebar-note">
-        <span class="status-dot" aria-hidden="true"></span>
-        <strong>خصوصية كاملة</strong>
-        <p>يحفظ التقدم على هذا الجهاز فقط، ولا تُرسل أي بيانات.</p>
-      </div>
-      <div class="author-card">
-        <span>تحرير</span>
-        <strong>الدكتور يسين شامي</strong>
-        <small>أستاذ مساعد<br>كلية القانون، جامعة الإمارات</small>
-      </div>
-    </aside>
+        <div class="institution-chip">
+          <span class="chip-dot"></span>
+          <span>كلية القانون · جامعة الإمارات العربية المتحدة</span>
+        </div>
 
-    <div class="sidebar-backdrop" id="sidebar-backdrop" hidden></div>
+        <nav class="main-nav" aria-label="التنقل الرئيسي">
+          <button class="nav-item active" data-view="dashboard">
+            <span class="nav-icon">⌂</span>
+            <span>لوحة المختبر</span>
+          </button>
+          <button class="nav-item" data-view="simulator">
+            <span class="nav-icon">◎</span>
+            <span>المحاكاة الإجرائية</span>
+            <span class="nav-badge">2</span>
+          </button>
+          <button class="nav-item" data-view="court">
+            <span class="nav-icon">⚖</span>
+            <span>المحكمة الافتراضية</span>
+          </button>
+          <button class="nav-item" data-view="ai">
+            <span class="nav-icon">✦</span>
+            <span>المساعد الذكي</span>
+            <span class="nav-badge accent">AI</span>
+          </button>
+          <button class="nav-item" data-view="quiz">
+            <span class="nav-icon">?</span>
+            <span>بنك الأسئلة التكيّفي</span>
+            <span class="nav-badge">5</span>
+          </button>
+          <button class="nav-item" data-view="map">
+            <span class="nav-icon">⌘</span>
+            <span>الخريطة الإجرائية</span>
+          </button>
+          <button class="nav-item" data-view="notice">
+            <span class="nav-icon">◫</span>
+            <span>التبليغ الافتراضي</span>
+          </button>
+          <button class="nav-item" data-view="execution">
+            <span class="nav-icon">↗</span>
+            <span>غرفة التنفيذ</span>
+          </button>
+          <button class="nav-item" data-view="sources">
+            <span class="nav-icon">▤</span>
+            <span>المصادر القانونية</span>
+          </button>
+        </nav>
 
-    <main id="main-content" tabindex="-1">
-      <div class="loading-state" aria-live="polite">جارٍ تجهيز منصة التعلّم…</div>
-    </main>
-  </div>
+        <div class="sidebar-footer">
+          <div class="author-card">
+            <div class="author-avatar">YS</div>
+            <div>
+              <strong>د. ياسين شامي</strong>
+              <small>مشرف المختبر · UAEU</small>
+            </div>
+          </div>
+          <div class="privacy-note">
+            <span>◉</span>
+            تقدّمك محفوظ على هذا الجهاز فقط
+          </div>
+        </div>
+      </aside>
 
-  <section class="accessibility-panel" id="accessibility-panel" aria-label="إعدادات الوصول" hidden>
-    <div class="panel-heading">
-      <div><span class="eyebrow">تخصيص العرض</span><h2>إعدادات الوصول</h2></div>
-      <button class="icon-button" id="accessibility-close" type="button" aria-label="إغلاق إعدادات الوصول">×</button>
+      <main class="main-content">
+        <header class="topbar">
+          <div class="topbar-leading">
+            <button class="mobile-menu" id="mobileMenu" aria-label="فتح القائمة">☰</button>
+            <div>
+              <p class="eyebrow">مساحة التعلم بالممارسة</p>
+              <h1 id="viewTitle">لوحة المختبر</h1>
+            </div>
+          </div>
+          <div class="topbar-actions">
+            <div class="live-status"><span></span> وضع المحاكاة آمن</div>
+            <button class="icon-button" id="resetProgress" title="إعادة ضبط التقدم" aria-label="إعادة ضبط التقدم">↺</button>
+            <div class="user-pill">
+              <div class="user-avatar">ط</div>
+              <div>
+                <strong>طالب القانون</strong>
+                <small>الفصل الحالي</small>
+              </div>
+              <span class="chevron">⌄</span>
+            </div>
+          </div>
+        </header>
+
+        <div class="content-wrap">
+          <section class="view active" id="view-dashboard" data-title="لوحة المختبر">
+            <div class="hero-panel">
+              <div class="hero-copy">
+                <div class="hero-kicker"><span class="sparkle">✦</span> مختبر إجرائي حي</div>
+                <h2>حوّل القاعدة القانونية<br /><em>إلى قرار قابل للاختبار.</em></h2>
+                <p>
+                  رحلة تعليمية تحاكي الدعوى والتنفيذ من أول إيداع الصحيفة إلى توزيع حصيلة البيع، مع قاضٍ افتراضي، ومساعد ذكي، وسجل إجرائي يشرح أثر كل اختيار.
+                </p>
+                <div class="hero-actions">
+                  <button class="primary-button" data-view="simulator">ابدأ سيناريو جديد <span>←</span></button>
+                  <button class="ghost-button" data-view="court">ادخل المحكمة الافتراضية</button>
+                </div>
+              </div>
+              <div class="hero-visual" aria-label="مخطط الرحلة الإجرائية">
+                <div class="orbit orbit-one"></div>
+                <div class="orbit orbit-two"></div>
+                <div class="court-seal">⚖<small>UAEU</small></div>
+                <div class="orbit-node node-one"><span>01</span><b>دعوى</b></div>
+                <div class="orbit-node node-two"><span>02</span><b>حكم</b></div>
+                <div class="orbit-node node-three"><span>03</span><b>تنفيذ</b></div>
+                <div class="orbit-node node-four"><span>04</span><b>توزيع</b></div>
+              </div>
+            </div>
+
+            <div class="metric-grid">
+              <article class="metric-card">
+                <div class="metric-label">التقدم العام</div>
+                <div class="metric-value" id="metricProgress">0%</div>
+                <div class="progress-track"><span id="metricProgressBar" style="width: 0%"></span></div>
+                <small>يتحدث تلقائياً مع كل تمرين</small>
+              </article>
+              <article class="metric-card">
+                <div class="metric-label">الدقة الإجرائية</div>
+                <div class="metric-value"><span id="metricAccuracy">—</span><small id="metricAccuracySuffix"></small></div>
+                <div class="metric-spark"><i style="height: 28%"></i><i style="height: 44%"></i><i style="height: 38%"></i><i style="height: 62%"></i><i style="height: 54%"></i><i style="height: 76%"></i><i style="height: 88%"></i></div>
+                <small>آخر 7 قرارات مسجلة</small>
+              </article>
+              <article class="metric-card">
+                <div class="metric-label">الملفات المنجزة</div>
+                <div class="metric-value" id="metricFiles">0</div>
+                <div class="metric-inline"><span class="success-dot"></span> مذكرات ومحاضر افتراضية</div>
+              </article>
+              <article class="metric-card accent-card">
+                <div class="metric-label">المستوى الحالي</div>
+                <div class="metric-level"><span id="metricLevel">مستكشف</span><span class="level-icon">◆</span></div>
+                <div class="level-steps"><span class="filled"></span><span class="filled"></span><span></span><span></span><span></span></div>
+                <small id="metricLevelNote">أكمل أول قرارين للترقية</small>
+              </article>
+            </div>
+
+            <div class="section-heading-row">
+              <div>
+                <p class="eyebrow">مسارات مقترحة</p>
+                <h3>ماذا تريد أن تختبر اليوم؟</h3>
+              </div>
+              <button class="text-button" data-view="sources">استعرض الخريطة القانونية <span>←</span></button>
+            </div>
+
+            <div class="path-grid">
+              <article class="path-card primary-path" data-view="simulator" data-scenario="claim">
+                <div class="path-topline"><span class="path-number">01</span><span class="tag teal">مسار كامل</span></div>
+                <h4>من عقد التوريد إلى توزيع الحصيلة</h4>
+                <p>دعوى مطالبة، حكم، سند تنفيذي، حجز لدى الغير، ثم توزيع المبلغ المحصل.</p>
+                <div class="path-footer"><span>8 محطات</span><span class="arrow-circle">←</span></div>
+              </article>
+              <article class="path-card" data-view="simulator" data-scenario="provisional">
+                <div class="path-topline"><span class="path-number">02</span><span class="tag sand">مسار تحليلي</span></div>
+                <h4>الحجز التحفظي والإشكال في التنفيذ</h4>
+                <p>اختبر شرط الاستعجال، دعوى الموضوع خلال 8 أيام، وطلب وقف التنفيذ.</p>
+                <div class="path-footer"><span>6 محطات</span><span class="arrow-circle">←</span></div>
+              </article>
+              <article class="path-card special-path" data-view="court">
+                <div class="path-topline"><span class="path-number">03</span><span class="tag violet">جلسة حية</span></div>
+                <h4>قاعة التنفيذ الافتراضية</h4>
+                <p>تولَّ دور المحامي أو الخصم أو مأمور التنفيذ، واترك القاضي الافتراضي يدير الجلسة.</p>
+                <div class="path-footer"><span>5 أدوار متاحة</span><span class="arrow-circle">←</span></div>
+              </article>
+            </div>
+
+            <div class="bottom-dashboard-grid">
+              <article class="activity-card">
+                <div class="card-heading"><div><p class="eyebrow">السجل الشخصي</p><h3>آخر نشاط</h3></div><button class="small-button" id="downloadReport">تحميل التقرير</button></div>
+                <div id="activityList" class="activity-list"><div class="empty-state">لا توجد قرارات بعد. ابدأ بأحد المسارات أعلاه.</div></div>
+              </article>
+              <article class="principle-card">
+                <div class="principle-icon">“</div>
+                <p class="eyebrow">قاعدة اليوم</p>
+                <blockquote>لا تنفيذ جبري بغير سند تنفيذي، ولا حجز تنفيذي قبل تحقق شروطه.</blockquote>
+                <div class="source-line">المختبر · مستند إلى كتاب التنفيذ، ص 8–100، وقانون الإجراءات المدنية</div>
+              </article>
+            </div>
+          </section>
+
+          <section class="view" id="view-simulator" data-title="المحاكاة الإجرائية">
+            <div class="page-intro">
+              <div><p class="eyebrow">اتخذ القرار · راقب الأثر</p><h2>المحاكاة الإجرائية</h2><p>كل محطة تختبر قاعدة من الكتابين والقانون. القرار السليم يفتح المحطة التالية ويضيف إلى ملفك الإجرائي.</p></div>
+              <div class="session-score"><span>رصيد الجلسة</span><strong id="simScore">0</strong><small>نقطة</small></div>
+            </div>
+            <div class="scenario-switcher" id="scenarioSwitcher">
+              <button class="scenario-tab active" data-scenario="claim"><span>01</span><div><strong>مسار الدعوى إلى التوزيع</strong><small>مطالبة تجارية · حجز لدى الغير</small></div><b>↗</b></button>
+              <button class="scenario-tab" data-scenario="provisional"><span>02</span><div><strong>الحجز التحفظي والإشكال</strong><small>استعجال · 8 أيام · وقف التنفيذ</small></div><b>↗</b></button>
+            </div>
+            <div class="simulator-layout">
+              <article class="simulation-card">
+                <div class="simulation-head"><div><span class="mini-label" id="simCaseLabel">ملف رقم UAEU–001</span><h3 id="simCaseTitle">من عقد التوريد إلى توزيع الحصيلة</h3></div><span class="status-pill" id="simStatus">المحطة 1 من 8</span></div>
+                <div class="stage-track" id="stageTrack"></div>
+                <div class="case-facts" id="caseFacts"></div>
+                <div class="decision-area">
+                  <div class="decision-header"><span class="eyebrow">قرارك الإجرائي</span><span class="decision-counter" id="decisionCounter">اختر إجابة واحدة</span></div>
+                  <h4 id="decisionPrompt"></h4>
+                  <div class="decision-options" id="decisionOptions"></div>
+                  <div class="sim-feedback hidden" id="simFeedback"></div>
+                </div>
+                <div class="simulation-footer"><button class="ghost-button" id="simPrev">← المحطة السابقة</button><button class="primary-button" id="simNext" disabled>المحطة التالية →</button></div>
+              </article>
+              <aside class="simulation-aside">
+                <div class="aside-card procedural-ledger"><div class="card-heading"><div><p class="eyebrow">السجل الحي</p><h3>أثر القرار</h3></div><span class="ledger-light"></span></div><div id="ledgerList" class="ledger-list"><div class="empty-state compact">ستظهر هنا آثار قراراتك.</div></div></div>
+                <div class="aside-card source-callout"><div class="source-icon">§</div><div><p class="eyebrow">مرجع المحطة</p><h4 id="simSourceTitle">المادة 44 من قانون الإجراءات المدنية</h4><p id="simSourceText">بيانات صحيفة الدعوى واختصاص المحكمة.</p></div><button data-view="sources" class="link-button">افتح المصدر</button></div>
+                <div class="aside-card hint-card"><span class="hint-icon">✦</span><div><strong>تلميح تعليمي</strong><p id="simHint">اقرأ السؤال قبل اختيار نوع الإجراء؛ بعض الآثار لا يمكن تداركها لاحقاً.</p></div></div>
+              </aside>
+            </div>
+          </section>
+
+          <section class="view" id="view-court" data-title="المحكمة الافتراضية">
+            <div class="page-intro court-intro"><div><p class="eyebrow">جلسة محاكاة · لا أثر قانوني حقيقي</p><h2>المحكمة الافتراضية</h2><p>تدرب على المرافعة في منازعة تنفيذية، مع توزيع أدوار ديناميكي وقاضٍ افتراضي يطلب المستندات ويعلّل قراره.</p></div><div class="court-clock"><span class="live-dot"></span><strong>الجلسة مفتوحة</strong><small id="courtTurnLabel">الدور: القاضي الافتراضي</small></div></div>
+            <div class="court-layout">
+              <article class="court-room-card">
+                <div class="court-room-header"><div class="room-title"><span class="room-seal">⚖</span><div><span class="mini-label">قاعة التنفيذ رقم 03</span><h3>منازعة مؤقتة في حجز لدى الغير</h3></div></div><span class="room-status">تسجيل الجلسة ON</span></div>
+                <div class="hearing-stage"><div class="judge-desk"><div class="judge-avatar">ق</div><strong>القاضي الافتراضي</strong><small>رئيس الدائرة</small></div><div class="hearing-table"><div class="role-seat lawyer-seat"><span>مح</span><strong>المحامي</strong><small>طالب التنفيذ</small></div><div class="role-seat opponent-seat"><span>خص</span><strong>الخصم</strong><small>المنفذ ضده</small></div><div class="role-seat officer-seat"><span>من</span><strong>المُنفّذ</strong><small>مأمور التنفيذ</small></div></div></div>
+                <div class="transcript" id="courtTranscript"></div>
+                <div class="court-controls"><label for="courtAction">اختر مداخلتك في الجلسة</label><div class="control-row"><select id="courtAction"><option value="claim">أقدم طلب قيد الحجز وتقرير الغير</option><option value="defense">أدفع ببطلان التبليغ وعدم العلم</option><option value="objection">أطلب وقف التنفيذ مؤقتاً</option><option value="officer">أعرض محضر الحجز والتبليغ</option><option value="judge">أطلب من القاضي تحديد الأجل التالي</option></select><button class="primary-button" id="courtSpeak">تحدث في الجلسة <span>↗</span></button></div><div class="court-tip">سيحلل القاضي الافتراضي مداخلتك ويستند إلى المادة الأقرب في سجل الجلسة.</div></div>
+              </article>
+              <aside class="court-aside"><div class="roles-card"><div class="card-heading"><div><p class="eyebrow">التحكم في الأدوار</p><h3>من يمثّلك؟</h3></div><span class="role-count">5 أدوار</span></div><div class="role-picker" id="rolePicker"><button class="role-choice active" data-role="student"><span class="role-avatar student">ط</span><div><strong>الطالب / المحامي</strong><small>تقديم الطلبات والدفوع</small></div><i>✓</i></button><button class="role-choice" data-role="judge"><span class="role-avatar judge">ق</span><div><strong>القاضي الافتراضي</strong><small>إدارة الجلسة والتعليل</small></div><i>✓</i></button><button class="role-choice" data-role="opponent"><span class="role-avatar opponent">خ</span><div><strong>الخصم الافتراضي</strong><small>إثارة الدفوع والمنازعة</small></div><i>✓</i></button><button class="role-choice" data-role="officer"><span class="role-avatar officer">م</span><div><strong>المُنفّذ الافتراضي</strong><small>تنفيذ الإجراءات المادية</small></div><i>✓</i></button><button class="role-choice" data-role="notice"><span class="role-avatar notice">ت</span><div><strong>موظف التبليغ</strong><small>إنشاء أثر التبليغ</small></div><i>✓</i></button></div></div><div class="court-rule-card"><span class="rule-number">01</span><div><p class="eyebrow">قاعدة الجلسة</p><strong>الاختصاص بقاضي التنفيذ في منازعات التنفيذ الوقتية.</strong><small>قانون الإجراءات المدنية · المادة 239</small></div></div></aside>
+            </div>
+          </section>
+
+          <section class="view" id="view-ai" data-title="المساعد الذكي">
+            <div class="page-intro ai-intro"><div><p class="eyebrow">Draft · Analyze · Improve</p><h2>المساعد الذكي للصياغة</h2><p>مدرب إجرائي يراجع بنية الصحيفة أو الطلب ويقترح أسئلة تحقق، مع إظهار أساس الملاحظة للطالب والأستاذ.</p></div><div class="ai-orb"><span>✦</span><small>AI<br />COACH</small></div></div>
+            <div class="ai-layout"><article class="ai-workbench"><div class="workbench-tabs"><button class="workbench-tab active" data-doc-type="claim">صحيفة دعوى</button><button class="workbench-tab" data-doc-type="execution">طلب تنفيذ</button><button class="workbench-tab" data-doc-type="objection">اعتراض / إشكال</button><button class="workbench-tab" data-doc-type="notice">محضر تبليغ</button></div><div class="editor-toolbar"><span>المحرر التدريبي</span><div><button title="تنسيق">B</button><button title="قائمة">☷</button><button title="إضافة مرجع">§</button></div></div><textarea id="aiDraft" placeholder="ابدأ بكتابة مسودة إجرائية...\n\nمثال: تتقدم الشركة المدعية بصحيفة دعوى للمطالبة بقيمة التوريد..."></textarea><div class="editor-footer"><span><i class="save-dot"></i> مسودة محفوظة محلياً</span><span id="draftCount">0 كلمة</span><button class="primary-button" id="analyzeDraft">حلّل المسودة <span>✦</span></button></div></article><aside class="ai-feedback-panel"><div class="feedback-header"><div><p class="eyebrow">مراجعة فورية</p><h3>لوحة المدرب</h3></div><span class="ai-badge">AI</span></div><div id="aiResponse" class="ai-response"><div class="ai-welcome"><div class="welcome-icon">✦</div><h4>جاهز لمراجعة مسودتك</h4><p>سيبحث المساعد عن الاختصاص، الأطراف، الطلبات، المواعيد، والسند القانوني. اكتب أي مسودة ثم اضغط «حلّل».</p><div class="ai-scope"><span>اختصاص</span><span>طلبات</span><span>مواعيد</span><span>سند</span></div></div></div><div class="supervision-bar"><span class="shield">⬢</span><div><strong>إشراف الأستاذ</strong><small>الملاحظات تدريبية ولا تستبدل مراجعة عضو هيئة التدريس.</small></div><label class="switch"><input type="checkbox" id="teacherMode" checked /><span></span></label></div></aside></div><div class="ai-prompts"><p class="eyebrow">أسئلة ذكية سريعة</p><button class="prompt-chip" data-prompt="راجع لي عناصر صحيفة الدعوى واكشف البيانات الناقصة">ما البيانات الناقصة؟</button><button class="prompt-chip" data-prompt="ما المحكمة المختصة في هذا السيناريو؟">اختبر الاختصاص</button><button class="prompt-chip" data-prompt="اقترح سنداً قانونياً للحجز لدى الغير ومواعيده">اقترح السند والمواعيد</button><button class="prompt-chip" data-prompt="افحص خطر البطلان في التبليغ">افحص خطر البطلان</button></div></section>
+
+          <section class="view" id="view-quiz" data-title="بنك الأسئلة التكيّفي">
+            <div class="page-intro quiz-intro"><div><p class="eyebrow">اختبر · تكيف · عالج الفجوة</p><h2>بنك الأسئلة التكيّفي</h2><p>أسئلة قصيرة تتغير بحسب إجابتك، وتحوّل الخطأ إلى مسار مراجعة قابل للتتبع.</p></div><div class="quiz-score"><span>مؤشر الإتقان</span><strong id="quizMastery">0%</strong><small id="quizProgressLabel">السؤال 1 من 5</small></div></div>
+            <div class="quiz-layout"><article class="quiz-card"><div class="quiz-card-head"><div><span class="mini-label">جلسة تكيفية · Q-2026</span><h3 id="quizTopic">الاختصاص والإعلان</h3></div><span class="status-pill" id="quizDifficulty">تمهيدي</span></div><div class="quiz-progress"><span id="quizProgressBar"></span></div><div class="quiz-question"><p class="eyebrow" id="quizQuestionType">سؤال اختيار من متعدد</p><h4 id="quizPrompt"></h4><div id="quizOptions" class="quiz-options"></div><div id="quizFeedback" class="quiz-feedback hidden"></div></div><div class="quiz-footer"><span id="quizSource">مرجع السؤال سيظهر بعد الإجابة</span><button class="primary-button" id="quizNext" disabled>السؤال التالي →</button></div></article><aside class="quiz-aside"><div class="weakness-card"><div class="card-heading"><div><p class="eyebrow">لوحة الطالب</p><h3>نقاط تحتاج مراجعة</h3></div><span class="adaptive-icon">↗</span></div><div id="weaknessList" class="weakness-list"><div class="empty-state compact">أجب عن سؤالين لتظهر الإشارة.</div></div></div><div class="cohort-card"><span class="cohort-icon">◒</span><div><p class="eyebrow">إشارة للمدرّس</p><strong>أكثر موضع يتعثر فيه الطلاب</strong><p>تمييز الإعلان عن التبليغ، وربط الحجز التحفظي بدعوى الموضوع خلال 8 أيام.</p><small>مؤشر تجريبي · لا يتضمن بيانات شخصية</small></div></div></aside></div>
+          </section>
+
+          <section class="view" id="view-map" data-title="الخريطة الإجرائية">
+            <div class="page-intro map-intro"><div><p class="eyebrow">ارسم المسار قبل اتخاذ القرار</p><h2>الخريطة الإجرائية</h2><p>خريطة ذهنية وانسيابية تساعدك على رؤية الترتيب، البوابات، والفروع التي قد تعيد الملف إلى نقطة سابقة.</p></div><div class="map-legend"><span><i class="legend-dot teal"></i> محطة أصلية</span><span><i class="legend-dot sand"></i> ميعاد</span><span><i class="legend-dot violet"></i> منازعة</span></div></div>
+            <div class="map-switcher"><button class="active" data-map="claimMap">من الدعوى إلى التوزيع</button><button data-map="executionMap">خريطة التنفيذ والحجوزات</button></div>
+            <div class="map-canvas" id="claimMap"><div class="map-caption"><span class="tag teal">المسار الأساسي</span><strong>رحلة الحق من الورقة إلى الحصيلة</strong><small>اسحب بصرك من اليمين إلى اليسار؛ كل بوابة لها أثر.</small></div><div class="map-flow"><div class="map-node primary"><span>01</span><strong>رفع الدعوى</strong><small>م 44</small></div><div class="map-connector"></div><div class="map-node primary"><span>02</span><strong>القيد والإعلان</strong><small>م 47 · م 49</small></div><div class="map-connector"></div><div class="map-node primary"><span>03</span><strong>الحكم</strong><small>قوة تنفيذية</small></div><div class="map-connector"></div><div class="map-node primary"><span>04</span><strong>طلب التنفيذ</strong><small>م 206</small></div><div class="map-connector"></div><div class="map-node primary"><span>05</span><strong>الحجز</strong><small>م 233 · 252</small></div><div class="map-connector"></div><div class="map-node primary"><span>06</span><strong>التحصيل</strong><small>بيع / تقرير الغير</small></div><div class="map-connector"></div><div class="map-node primary"><span>07</span><strong>التوزيع</strong><small>م 310</small></div></div><div class="map-branches"><div class="branch-card notice-branch"><span>بوابة الإعلان</span><p>إخفاق في إثبات الهوية أو الأثر؟</p><b>↩ عودة إلى التبليغ</b></div><div class="branch-card objection-branch"><span>بوابة المنازعة</span><p>إشكال في التنفيذ أو طلب وقف؟</p><b>↩ إلى قاضي التنفيذ · م 239</b></div></div></div>
+            <div class="map-canvas hidden" id="executionMap"><div class="map-caption"><span class="tag violet">خريطة الحجوزات</span><strong>اختيار الأداة يتبع مكان المال وطبيعة الخطر</strong><small>لا تنتقل إلى البيع أو التوزيع قبل اكتمال بوابة الحجز.</small></div><div class="branch-map"><div class="map-node root"><span>00</span><strong>سند تنفيذي معلن</strong><small>انقضاء مهلة الوفاء</small></div><div class="branch-line"></div><div class="branch-columns"><div class="branch-column"><div class="map-node branch-teal"><span>01</span><strong>حجز لدى الغير</strong><small>أمر → إعلان → تقرير</small></div><div class="branch-result">تحصيل المال لدى البنك أو العميل</div></div><div class="branch-column"><div class="map-node branch-sand"><span>02</span><strong>حجز المنقولات</strong><small>جرد → محضر → بيع</small></div><div class="branch-result">حصيلة بيع المنقول</div></div><div class="branch-column"><div class="map-node branch-violet"><span>03</span><strong>الحجز التحفظي</strong><small>خطر → ضمان → 8 أيام</small></div><div class="branch-result">دعوى الموضوع أو رفع الحجز</div></div></div><div class="map-final">تجميع الحصيلة · ترتيب الدائنين · التوزيع</div></div></div>
+          </section>
+
+          <section class="view" id="view-notice" data-title="التبليغ الافتراضي">
+            <div class="page-intro"><div><p class="eyebrow">هوية · وسيلة · أثر</p><h2>مختبر التبليغ الافتراضي</h2><p>صمّم واقعة تبليغ ثم اختبر سلامتها: من هو المبلّغ إليه؟ ما الوسيلة؟ وما الأثر على بدء الميعاد؟</p></div><div class="notice-stamp">SERVICE<br /><small>SIMULATION</small></div></div>
+            <div class="notice-layout"><article class="notice-builder"><div class="card-heading"><div><p class="eyebrow">إنشاء محضر</p><h3>خطوة التبليغ</h3></div><span class="status-pill">تجريبي</span></div><div class="form-grid"><label>نوع المبلّغ إليه<select id="noticeTarget"><option value="person">شخص طبيعي</option><option value="company">شركة / شخص اعتباري</option><option value="unknown">موطن غير معلوم</option><option value="abroad">مقيم خارج الدولة</option></select></label><label>وسيلة التبليغ<select id="noticeMethod"><option value="electronic">تبليغ إلكتروني موثّق</option><option value="personal">تسليم شخصي</option><option value="workplace">في محل العمل</option><option value="publication">النشر</option><option value="wrong">وسيلة غير منتجة للأثر</option></select></label><label>تاريخ الإجراء<input type="date" id="noticeDate" /></label><label>إثبات الهوية<select id="noticeIdentity"><option value="verified">تم التحقق من الهوية</option><option value="delegate">استلام الوكيل / الموظف</option><option value="none">لا يوجد إثبات كافٍ</option></select></label></div><div class="notice-checks"><label><input type="checkbox" id="noticeAddress" checked /> العنوان مستخرج من السجل المعتمد</label><label><input type="checkbox" id="noticeReceipt" checked /> يوجد أثر استلام أو رفض</label><label><input type="checkbox" id="noticeLanguage" checked /> تمكين المبلّغ إليه من فهم مضمون الورقة</label></div><button class="primary-button full-width" id="generateNotice">أنشئ محضر التبليغ <span>↗</span></button></article><aside class="notice-result-card"><div class="result-placeholder" id="noticeResult"><div class="notice-icon">◫</div><h3>لم يُنشأ المحضر بعد</h3><p>غيّر أحد عناصر الواقعة ثم اطلب من النظام إصدار سجل تبليغ افتراضي.</p></div></aside></div><div class="notice-legal-strip"><div><span class="strip-icon">§</span><div><strong>المادة 49</strong><small>ميعاد الإعلان وأثر مخالفته</small></div></div><div><span class="strip-icon">◷</span><div><strong>المادة 47</strong><small>سداد الرسم خلال 3 أيام عمل</small></div></div><div><span class="strip-icon">✓</span><div><strong>قاعدة المختبر</strong><small>صحة الأثر أهم من اسم الوسيلة</small></div></div></div></section>
+
+          <section class="view" id="view-execution" data-title="غرفة التنفيذ">
+            <div class="page-intro execution-intro"><div><p class="eyebrow">من السند إلى الوفاء</p><h2>غرفة التنفيذ الافتراضي</h2><p>افحص السند التنفيذي، اختر طريق الحجز، ثم تابع الإعلان والبيع والتوزيع في سجل زمني قابل للمراجعة.</p></div><div class="execution-balance"><small>قيمة المطالبة الافتراضية</small><strong>185,000 <b>د.إ</b></strong><span>تحديث: الآن</span></div></div>
+            <div class="execution-layout"><article class="execution-board"><div class="board-header"><div><span class="mini-label">ملف التنفيذ · EX-2026-014</span><h3>شركة النور للتوريد ضد شركة المدار</h3></div><span class="status-pill green">قابل للتنفيذ</span></div><div class="execution-gates"><div class="gate done"><span>✓</span><div><strong>سند تنفيذي</strong><small>حكم نهائي مؤيد</small></div></div><div class="gate done"><span>✓</span><div><strong>إعلان السند</strong><small>تم في 06/10/2026</small></div></div><div class="gate active"><span>03</span><div><strong>إجراء الحجز</strong><small>بانتظار قرارك</small></div></div><div class="gate"><span>04</span><div><strong>البيع / التحصيل</strong><small>يفتح لاحقاً</small></div></div><div class="gate"><span>05</span><div><strong>التوزيع</strong><small>يفتح لاحقاً</small></div></div></div><div class="execution-action"><div class="action-title"><span class="eyebrow">اختر أداة التنفيذ</span><h4>ما الإجراء الأنسب لهذه الواقعة؟</h4></div><div class="execution-options" id="executionOptions"><button data-execution="garnishment"><span>▤</span><div><strong>حجز لدى الغير</strong><small>أموال المدين لدى بنك أو عميل</small></div><b>→</b></button><button data-execution="movables"><span>◈</span><div><strong>حجز المنقولات</strong><small>منقولات مملوكة للمدين</small></div><b>→</b></button><button data-execution="realestate"><span>⌂</span><div><strong>حجز العقار</strong><small>عقار مسجل باسم المدين</small></div><b>→</b></button></div><div class="execution-feedback" id="executionFeedback"><div class="feedback-placeholder"><span>↗</span> اختر أداة لرؤية تسلسلها الإجرائي.</div></div></div></article><aside class="execution-aside"><div class="timeline-card"><div class="card-heading"><div><p class="eyebrow">سجل التنفيذ</p><h3>الخط الزمني</h3></div><button class="icon-button small" id="clearExecution">↺</button></div><div class="execution-timeline" id="executionTimeline"><div class="timeline-item completed"><span>✓</span><div><strong>إيداع طلب التنفيذ</strong><small>المادة 206 · تحت إشراف قاضي التنفيذ</small></div></div><div class="timeline-item completed"><span>✓</span><div><strong>إعلان السند التنفيذي</strong><small>انقضاء مهلة الوفاء الطوعي</small></div></div><div class="timeline-item pending"><span>03</span><div><strong>انتظر اختيار نوع الحجز</strong><small>سيتولد المحضر هنا</small></div></div></div></div><div class="execution-alert"><span>!</span><div><strong>بوابة قانونية</strong><p>بعد إعلان السند التنفيذي، تمنح القاعدة العامة مهلة 7 أيام للوفاء قبل مباشرة التنفيذ الجبري.</p><small>المادة 233</small></div></div></aside></div></section>
+
+          <section class="view" id="view-sources" data-title="المصادر القانونية">
+            <div class="page-intro"><div><p class="eyebrow">مرجع كل قرار</p><h2>المصادر القانونية</h2><p>بطاقات مرجعية مختصرة تربط مكونات المنصة بالمادة القانونية والموضع التعليمي في الكتابين.</p></div><div class="source-version"><span class="live-dot"></span><strong>نسخة المنصة 1.0</strong><small>للتعليم والمحاكاة فقط</small></div></div>
+            <div class="source-filter" id="sourceFilter"><button class="active" data-filter="all">الكل</button><button data-filter="procedure">المرافعات</button><button data-filter="execution">التنفيذ</button><button data-filter="notice">التبليغ</button><button data-filter="ai">حوكمة الذكاء الاصطناعي</button></div>
+            <div class="source-grid" id="sourceGrid"><article class="source-card" data-source="procedure"><span class="source-number">44</span><div><span class="tag teal">قانون الإجراءات المدنية</span><h3>بيانات صحيفة الدعوى</h3><p>اسم المحكمة، بيانات الأطراف، الطلبات والوقائع والأسانيد، بما يتيح للمحاكي فحص اكتمال الصحيفة.</p><small>المادة 44 · كتاب المرافعات ص 132–147</small></div></article><article class="source-card" data-source="notice"><span class="source-number">49</span><div><span class="tag sand">الإعلان</span><h3>ميعاد الإعلان وأثره</h3><p>اختبار وسيلة التبليغ وإثبات الهوية والعنوان والأثر الإجرائي دون اختزال المسألة في شكل الوسيلة.</p><small>المادة 49 · كتاب المرافعات ص 155–170</small></div></article><article class="source-card" data-source="procedure"><span class="source-number">47</span><div><span class="tag teal">قيد الدعوى</span><h3>الرسم خلال 3 أيام عمل</h3><p>يوظف بنك الأسئلة هذا الأجل في أسئلة الترتيب الزمني وقرارات سلامة الإيداع.</p><small>المادة 47 · كتاب المرافعات ص 150–154</small></div></article><article class="source-card" data-source="execution"><span class="source-number">233</span><div><span class="tag violet">التنفيذ</span><h3>مهلة الوفاء بعد الإعلان</h3><p>لا يبدأ التنفيذ الجبري على الأصل قبل مضي 7 أيام من إعلان السند التنفيذي، مع مراعاة الاستثناءات.</p><small>المادة 233 · كتاب التنفيذ ص 8–100</small></div></article><article class="source-card" data-source="execution"><span class="source-number">247</span><div><span class="tag violet">حجز تحفظي</span><h3>الحجز التحفظي ودعوى الموضوع</h3><p>محاكاة طلب الحجز ثم اختبار رفع دعوى الحق خلال 8 أيام، وأثر عدم الإيداع في الميعاد.</p><small>المادة 247 · كتاب التنفيذ ص 153–250</small></div></article><article class="source-card" data-source="execution"><span class="source-number">252</span><div><span class="tag violet">حجز لدى الغير</span><h3>أمر الحجز وتقرير الغير</h3><p>يظهر في غرفة التنفيذ المسار من الأمر إلى إعلان الغير ثم تقريره خلال الميعاد المحدد.</p><small>المادة 252 وما بعدها · كتاب التنفيذ ص 153–250</small></div></article><article class="source-card" data-source="execution"><span class="source-number">239</span><div><span class="tag violet">منازعة تنفيذ</span><h3>الإشكال الوقتي</h3><p>يمثل القاضي الافتراضي أثر الإشكال على الاستمرار في التنفيذ إلى حين الفصل، ومواعيد دعوى الموضوع.</p><small>المادة 239 · كتاب التنفيذ ص 277–325</small></div></article><article class="source-card" data-source="execution"><span class="source-number">310</span><div><span class="tag violet">توزيع</span><h3>توزيع حصيلة التنفيذ</h3><p>ينهي السيناريو مساره بتحديد وقت التوزيع بعد الحجز أو البيع أو تقرير الغير وفق الواقعة.</p><small>المادة 310 · كتاب التنفيذ ص 251–262</small></div></article><article class="source-card" data-source="ai"><span class="source-number">AI</span><div><span class="tag dark">حوكمة</span><h3>الذكاء الاصطناعي مدرب لا قاضٍ حقيقي</h3><p>كل مخرجات المساعد الافتراضية قابلة للمراجعة، ويظل الأستاذ صاحب الإشراف التربوي والقرار التعليمي.</p><small>سياسة المنصة · لا بيانات شخصية · لا أثر قانوني</small></div></article></div><div class="references-footer"><strong>المراجع المعتمدة في بناء المختبر</strong><span>كتاب الوجيز في قانون الإجراءات المدنية · كتاب التنفيذ الجبري · قانون الإجراءات المدنية الإماراتي رقم 42 لسنة 2022 وتعديلاته المنشورة رسمياً</span><a href="https://uaelegislation.gov.ae/ar/legislations/1602" target="_blank" rel="noopener">فتح النص الرسمي ↗</a></div></section>
+        </div>
+        <footer class="site-footer"><span>مختبر ياسين شامي التعليمي · إصدار تجريبي للتدريس</span><span>© كلية القانون · جامعة الإمارات العربية المتحدة</span></footer>
+      </main>
     </div>
-    <div class="setting-row">
-      <div><strong>حجم النص</strong><small>غيّر الحجم دون فقدان المحتوى</small></div>
-      <div class="segmented-control" role="group" aria-label="حجم النص">
-        <button type="button" data-font="normal">عادي</button>
-        <button type="button" data-font="large">كبير</button>
-        <button type="button" data-font="xlarge">أكبر</button>
-      </div>
-    </div>
-    <label class="switch-row"><span><strong>تباين مرتفع</strong><small>وضوح أكبر للنص والحدود</small></span><input id="contrast-toggle" type="checkbox" role="switch"></label>
-    <label class="switch-row"><span><strong>تقليل الحركة</strong><small>تعطيل الانتقالات غير الضرورية</small></span><input id="motion-toggle" type="checkbox" role="switch"></label>
-  </section>
-
-  <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
-  <noscript><div class="noscript">تحتاج المنصة إلى تفعيل JavaScript لتشغيل الأنشطة التفاعلية.</div></noscript>
-
-  <script src="content.js"></script>
-  <script src="logic.js"></script>
-  <script src="app.js"></script>
-</body>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </body>
 </html>
