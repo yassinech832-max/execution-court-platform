@@ -12,6 +12,7 @@
   const BOOK = window.PROCEDURAL_BOOK || { meta: {}, parts: [], sections: [], rules: [], quiz: [] };
   const CORPUS = window.PROCEDURAL_BOOK_CORPUS || { pages: [] };
   const ENFORCEMENT_BOOK = window.ENFORCEMENT_BOOK || { meta: {}, parts: [], sections: [], rules: [], quiz: [] };
+  const CIVIL_LAW = window.CIVIL_PROCEDURE_LAW || { meta: {}, sections: [], articles: [], quiz: [] };
   const ENFORCEMENT_CORPUS = (() => {
     const parts = window.ENFORCEMENT_BOOK_CORPUS_PARTS || [];
     return { source: parts[0]?.source || "", pages: parts.flatMap((part) => part.pages || []) };
@@ -287,11 +288,13 @@
     },
   ];
 
+  const lawQuizStartIndex = quizQuestions.length;
+  quizQuestions.push(...(CIVIL_LAW.quiz || []));
   const bookQuizStartIndex = quizQuestions.length;
   quizQuestions.push(...(BOOK.quiz || []));
   const enforcementQuizStartIndex = quizQuestions.length;
   quizQuestions.push(...(ENFORCEMENT_BOOK.quiz || []));
-  const initialQuizQueue = [0, 1, 2, 3, 4, ...Array.from({ length: Math.min(5, (BOOK.quiz || []).length) }, (_, index) => bookQuizStartIndex + index), ...Array.from({ length: Math.min(5, (ENFORCEMENT_BOOK.quiz || []).length) }, (_, index) => enforcementQuizStartIndex + index)];
+  const initialQuizQueue = [0, 1, 2, 3, 4, ...Array.from({ length: Math.min(5, (CIVIL_LAW.quiz || []).length) }, (_, index) => lawQuizStartIndex + index), ...Array.from({ length: Math.min(5, (BOOK.quiz || []).length) }, (_, index) => bookQuizStartIndex + index), ...Array.from({ length: Math.min(5, (ENFORCEMENT_BOOK.quiz || []).length) }, (_, index) => enforcementQuizStartIndex + index)];
 
   const defaultState = {
     view: "dashboard",
@@ -318,6 +321,9 @@
     enforcementFilter: "all",
     enforcementSearch: "",
     enforcementSelected: "",
+    lawFilter: "all",
+    lawSearch: "",
+    lawSelected: "civil-law-1",
     quizQueue: initialQuizQueue,
     quizIndex: 0,
     quizSelection: null,
@@ -339,8 +345,10 @@
       if (!Number.isInteger(merged.quizIndex)) merged.quizIndex = 0;
       if (!bookItems().some((item) => item.id === merged.bookSelected)) merged.bookSelected = BOOK.rules[0]?.id || "";
       if (!enforcementBookItems().some((item) => item.id === merged.enforcementSelected)) merged.enforcementSelected = enforcementBookItems().find((item) => item.type === "principle")?.id || "";
+      if (!civilLawItems().some((item) => item.id === merged.lawSelected)) merged.lawSelected = CIVIL_LAW.articles[0]?.id || "";
       if (!BOOK.sections.length && merged.bookFilter !== "all") merged.bookFilter = "all";
       if (!ENFORCEMENT_BOOK.sections.length && merged.enforcementFilter !== "all") merged.enforcementFilter = "all";
+      if (!CIVIL_LAW.sections.length && merged.lawFilter !== "all") merged.lawFilter = "all";
       if (typeof merged.judgmentTitle !== "string") merged.judgmentTitle = "";
       if (typeof merged.judgmentText !== "string") merged.judgmentText = "";
       if (typeof merged.judgmentFileName !== "string") merged.judgmentFileName = "";
@@ -407,7 +415,7 @@
     if (view === "map") renderMap();
     if (view === "notice") renderNotice();
     if (view === "execution") renderExecution();
-    if (view === "sources") renderSources();
+    if (view === "sources") { renderSources(); renderCivilLawSource(); }
   }
 
   function renderDashboard() {
@@ -727,6 +735,47 @@
     return hits.length >= Math.max(1, Math.ceil(terms.length * 0.6));
   }
 
+  function civilLawSectionFor(article) {
+    return (CIVIL_LAW.sections || []).find((section) => article.number >= section.from && article.number <= section.to) || null;
+  }
+
+  function civilLawItems() {
+    return (CIVIL_LAW.articles || []).map((article) => {
+      const section = civilLawSectionFor(article);
+      return { ...article, type: "law", sectionId: section?.id || "", sectionTitle: section?.title || "" };
+    });
+  }
+
+  function lawArticleScore(article, query) {
+    if (!query) return 0;
+    const haystack = normalizeBookText(`${article.number} ${article.label} ${article.title} ${article.part} ${article.chapter} ${article.topic} ${(article.tags || []).join(" ")} ${article.text}`);
+    const terms = query.split(/\s+/).filter((term) => term.length > 1);
+    const numberTerms = query.match(/\d+/g) || [];
+    const termScore = terms.reduce((total, term) => total + (haystack.includes(term) || (term.length > 4 && haystack.includes(term.slice(0, -2))) ? 1 : 0), 0);
+    const numberScore = numberTerms.includes(String(article.number)) ? 4 : 0;
+    return termScore + numberScore + (haystack.includes(query) ? 2 : 0);
+  }
+
+  function findCivilLawMatches(text, limit = 3) {
+    const query = normalizeBookText(text);
+    if (!query || limit < 1) return [];
+    return civilLawItems()
+      .map((article) => ({
+        ...article,
+        title: article.title,
+        label: article.label,
+        summary: article.text.replace(/\s+/g, " ").slice(0, 420),
+        principle: article.text.replace(/\s+/g, " ").slice(0, 420),
+        source: article.source,
+        page: article.number,
+        matchScore: lawArticleScore(article, query),
+        sourceBook: "law",
+      }))
+      .filter((article) => article.matchScore > 0)
+      .sort((a, b) => (b.matchScore - a.matchScore) || (a.number - b.number))
+      .slice(0, limit);
+  }
+
   function bookChapterItems() {
     return (BOOK.sections || []).flatMap((section) => [
       { type: "chapter", id: `section-${section.id}`, title: section.title, label: section.number, page: section.page, summary: section.summary, tags: ["باب", section.title], parent: section.title, tone: section.tone },
@@ -758,9 +807,13 @@
       return { type: "text", id: `text-${page.id}`, title: `مقطع المصدر في الصفحة ${page.printedPage}`, page: page.printedPage, source: `الوجيز، ص ${page.printedPage}`, principle: excerpt, summary: excerpt, text: page.text, tags: ["نص المصدر", `الجزء ${page.part}`], matchScore: score };
     }).filter((page) => page.matchScore > 0);
     const civilMatches = [...ruleMatches, ...pageMatches];
+    const lawMatches = findCivilLawMatches(text, limit);
     const executionContext = /تنفيذ|حجز|سند تنفيذي|بيع|توزيع|إشكال|قاضي التنفيذ|المدين|الدائن|الغير|التقرير بما في الذمة|رسو المزاد/u.test(query);
     const enforcementMatches = executionContext ? findEnforcementMatches(text, limit) : [];
-    return [...civilMatches, ...enforcementMatches].sort((a, b) => (b.matchScore - a.matchScore) || (a.type === "principle" ? -1 : 1)).slice(0, limit);
+    const sourcePriority = { law: -2, principle: -1, text: 1 };
+    return [...lawMatches, ...civilMatches, ...enforcementMatches]
+      .sort((a, b) => (b.matchScore - a.matchScore) || ((sourcePriority[a.type] ?? 0) - (sourcePriority[b.type] ?? 0)))
+      .slice(0, limit);
   }
 
   function renderBook() {
@@ -1269,6 +1322,73 @@
     $$("#sourceGrid .source-card").forEach((card) => { card.style.display = filter === "all" || card.dataset.source === filter ? "flex" : "none"; });
   }
 
+  function civilLawFilterMatch(article, filter) {
+    if (filter === "all") return true;
+    if (filter === "general") return article.number >= 1 && article.number <= 18;
+    if (filter === "jurisdiction") return article.number >= 19 && article.number <= 43;
+    if (filter === "filing") return article.number >= 44 && article.number <= 49;
+    if (filter === "notice") return (article.tags || []).some((tag) => ["الإعلان", "التبليغ", "الإعلان الإلكتروني", "المواعيد الإجرائية", "الميعاد"].includes(tag));
+    const section = (CIVIL_LAW.sections || []).find((item) => item.id === filter);
+    if (section) return article.number >= section.from && article.number <= section.to;
+    return true;
+  }
+
+  function formatLawText(text) {
+    return escapeHtml(text || "").replace(/\n/g, "<br />");
+  }
+
+  function renderCivilLawSource() {
+    const browser = $("#civilLawBrowser");
+    if (!browser) return;
+    const articles = civilLawItems();
+    const query = normalizeBookText(state.lawSearch);
+    const filter = state.lawFilter || "all";
+    const filtered = articles.filter((article) => civilLawFilterMatch(article, filter) && (!query || lawArticleScore(article, query) > 0));
+    const visible = filtered.slice(0, 49);
+    const selected = articles.find((article) => article.id === state.lawSelected);
+    if (!selected || !filtered.some((article) => article.id === selected.id)) state.lawSelected = visible[0]?.id || articles[0]?.id || "";
+    const current = articles.find((article) => article.id === state.lawSelected) || visible[0] || articles[0];
+    if (!current) return;
+
+    $("#civilLawScope").textContent = CIVIL_LAW.meta.scope || "مواد قانونية مفهرسة داخل المختبر.";
+    $("#civilLawDisplayNote").textContent = CIVIL_LAW.meta.displayNote || "النص محفوظ لأغراض تعليمية داخل المنصة.";
+    $("#civilLawStatus").textContent = CIVIL_LAW.meta.status || `${articles.length} مادة مفهرسة`;
+    $("#civilLawOfficialLink").href = CIVIL_LAW.meta.sourceUrl || "https://uaelegislation.gov.ae/ar/legislations/1602";
+    $("#civilLawSearchCount").textContent = query ? `${filtered.length} نتيجة` : `${articles.length} مادة`;
+    $(".legal-law-count").textContent = `${articles.length} م`;
+    $$("#civilLawFilters button").forEach((button) => button.classList.toggle("active", button.dataset.lawFilter === filter));
+
+    const sectionButtons = [{ id: "all", title: "كل المواد", detail: `${articles.length} مادة` }, ...(CIVIL_LAW.sections || []).map((section) => ({ id: section.id, title: section.title, detail: `${section.to - section.from + 1} مواد` }))];
+    $("#civilLawSectionList").innerHTML = sectionButtons.map((section) => `<button class="legal-section-button ${section.id === filter ? "active" : ""}" data-law-section="${escapeHtml(section.id)}"><div><strong>${escapeHtml(section.title)}</strong><small>${escapeHtml(section.detail)}</small></div></button>`).join("");
+
+    const results = $("#civilLawResults");
+    if (!visible.length) {
+      results.innerHTML = '<div class="legal-empty">لا توجد مادة مطابقة. جرّب رقم المادة أو «الإعلان» أو «الاختصاص» أو «صحيفة الدعوى».</div>';
+    } else {
+      results.innerHTML = visible.map((article) => `<button class="legal-article-card ${current.id === article.id ? "selected" : ""}" data-law-id="${escapeHtml(article.id)}"><div class="legal-article-card-top"><strong>${escapeHtml(article.label)}</strong><span>${escapeHtml(article.topic)}</span></div><h4>${escapeHtml(article.chapter || article.part)}</h4><p>${escapeHtml(article.text.replace(/\s+/g, " ").slice(0, 280))}</p><div class="legal-article-card-tags">${(article.tags || []).slice(0, 3).map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}</div></button>`).join("");
+    }
+
+    const labels = { simulator: "اختبر في المحاكاة", notice: "افتح التبليغ", court: "افتح المحكمة", ai: "اكتب مذكرة", judgment: "حلّل حكماً", quiz: "اختبر المادة", map: "شاهد الخريطة", execution: "افتح التنفيذ" };
+    const links = [...new Set(current.modules || [])].filter((view) => labels[view]).map((view) => `<button data-view="${view}">${labels[view]}</button>`).join("");
+    $("#civilLawReader").innerHTML = `<div class="legal-reader-head"><div><p class="eyebrow">${escapeHtml(current.topic)}</p><h3>${escapeHtml(current.title)}</h3><small>${escapeHtml(current.part)} · ${escapeHtml(current.chapter)}</small></div><span class="legal-reader-number">م ${escapeHtml(current.number)}</span></div><div class="legal-reader-path">${escapeHtml(current.source)} · المصدر: الدفعة النصية المرفقة</div><pre class="legal-verbatim">${formatLawText(current.text)}</pre><div class="legal-reader-footer"><div class="legal-use-case"><strong>بوابة التطبيق التعليمي</strong><br />${escapeHtml(current.useCase)}<div class="legal-tag-list">${(current.tags || []).map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}</div></div><div class="legal-reader-links">${links}<button data-law-action="quiz">جلسة أسئلة القانون</button><a class="legal-original-link" href="${escapeHtml(current.sourceUrl)}" target="_blank" rel="noopener">فتح الأصل الرسمي ↗</a></div></div>`;
+  }
+
+  function selectCivilLawArticle(id) {
+    if (!(CIVIL_LAW.articles || []).some((article) => article.id === id)) return;
+    state.lawSelected = id;
+    saveState();
+    renderCivilLawSource();
+  }
+
+  function startCivilLawQuiz() {
+    state.quizQueue = Array.from({ length: (CIVIL_LAW.quiz || []).length }, (_, index) => lawQuizStartIndex + index);
+    state.quizIndex = 0;
+    state.quizSelection = null;
+    saveState();
+    setView("quiz");
+    showToast("بدأت جلسة أسئلة مبنية على مواد قانون الإجراءات المدنية.");
+  }
+
   function resetProgress() {
     if (!window.confirm("سيؤدي ذلك إلى مسح تقدمك المحلي في المختبر. هل تريد المتابعة؟")) return;
     state = { ...defaultState };
@@ -1306,6 +1426,21 @@
 
   function bindEvents() {
     document.addEventListener("click", (event) => {
+      const lawAction = event.target.closest("[data-law-action]");
+      if (lawAction) {
+        event.preventDefault();
+        if (lawAction.dataset.lawAction === "quiz") { startCivilLawQuiz(); return; }
+        state.lawFilter = "all";
+        state.lawSearch = "";
+        state.lawSelected = CIVIL_LAW.articles[0]?.id || "";
+        saveState();
+        setView("sources");
+        return;
+      }
+      const lawArticle = event.target.closest("[data-law-id]");
+      if (lawArticle) { selectCivilLawArticle(lawArticle.dataset.lawId); return; }
+      const lawSection = event.target.closest("[data-law-section]");
+      if (lawSection) { state.lawFilter = lawSection.dataset.lawSection; saveState(); renderCivilLawSource(); return; }
       const viewTrigger = event.target.closest("[data-view]");
       if (viewTrigger) {
         event.preventDefault();
@@ -1357,6 +1492,8 @@
     $("#bookFilters").addEventListener("click", (event) => { const filter = event.target.closest("button[data-book-filter]"); if (!filter) return; state.bookFilter = filter.dataset.bookFilter; saveState(); renderBook(); });
     $("#enforcementSearch").addEventListener("input", (event) => { state.enforcementSearch = event.target.value; saveState(); renderEnforcementBook(); });
     $("#enforcementFilters").addEventListener("click", (event) => { const filter = event.target.closest("button[data-enforcement-filter]"); if (!filter) return; state.enforcementFilter = filter.dataset.enforcementFilter; saveState(); renderEnforcementBook(); });
+    $("#civilLawSearch").addEventListener("input", (event) => { state.lawSearch = event.target.value; saveState(); renderCivilLawSource(); });
+    $("#civilLawFilters").addEventListener("click", (event) => { const filter = event.target.closest("button[data-law-filter]"); if (!filter) return; state.lawFilter = filter.dataset.lawFilter; saveState(); renderCivilLawSource(); });
     $("#generateNotice").addEventListener("click", buildNotice);
     $("#clearExecution").addEventListener("click", () => { state.executionChoice = null; saveState(); renderExecution(); showToast("تمت إعادة غرفة التنفيذ إلى نقطة الاختيار."); });
     $("#sourceFilter").addEventListener("click", (event) => { const filterButton = event.target.closest("button[data-filter]"); if (!filterButton) return; $$("#sourceFilter button").forEach((button) => button.classList.toggle("active", button === filterButton)); renderSources(); });
