@@ -9,9 +9,10 @@
       content="منصة تعليمية تفاعلية للمرافعات والتنفيذ الجبري، منجزة من طرف الدكتور ياسين شامي، كلية القانون، جامعة الإمارات العربية المتحدة."
     />
     <title>مختبر ياسين شامي | المرافعات والتنفيذ الجبري</title>
-    <link rel="stylesheet" href="styles.css?v=20261008-book" />
-    <script defer src="book-data.js?v=20261008-book"></script>
-    <script defer src="app.js?v=20261008-book"></script>
+    <link rel="stylesheet" href="styles.css?v=20261008-corpus" />
+    <script defer src="book-data.js?v=20261008-corpus"></script>
+    <script defer src="book-corpus.js?v=20261008-corpus"></script>
+    <script defer src="app.js?v=20261008-corpus"></script>
   </head>
   <body>
     <div class="app-shell">
@@ -299,11 +300,11 @@
               <article><span class="book-stat-icon">↗</span><div><strong id="bookChapterCount">0</strong><small>موضوعاً وفصلاً</small></div></article>
             </div>
             <div class="book-search-card">
-              <div class="book-search-copy"><p class="eyebrow">محرك المعرفة</p><h3>ابحث داخل خريطة الكتاب</h3><p>جرّب: «الإعلان»، «البطلان»، «الاستئناف»، «الاختصاص المحلي»، أو «الطلبات العارضة».</p></div>
-              <div class="book-search-controls"><label class="book-search-input"><span>⌕</span><input id="bookSearch" type="search" placeholder="اكتب كلمة أو مادة أو موضوعاً..." /></label><div class="book-filters" id="bookFilters"><button class="active" data-book-filter="all">الكل</button><button data-book-filter="principle">قواعد</button><button data-book-filter="chapter">الأبواب والفصول</button><button data-book-filter="part">الأجزاء</button></div></div>
+              <div class="book-search-copy"><p class="eyebrow">محرك المعرفة</p><h3>ابحث في الخريطة والنص الكامل</h3><p>جرّب: «الإعلان»، «البطلان»، «الاستئناف»، «الاختصاص المحلي»، أو «الطلبات العارضة». تظهر لك القاعدة ومقطع الصفحة المرتبط بها.</p></div>
+              <div class="book-search-controls"><label class="book-search-input"><span>⌕</span><input id="bookSearch" type="search" placeholder="اكتب كلمة أو مادة أو موضوعاً..." /></label><div class="book-filters" id="bookFilters"><button class="active" data-book-filter="all">الكل</button><button data-book-filter="principle">قواعد</button><button data-book-filter="chapter">الأبواب والفصول</button><button data-book-filter="part">الأجزاء</button><button data-book-filter="text">النص الكامل</button></div></div>
             </div>
             <div class="book-layout"><aside class="book-side-card"><div class="card-heading"><div><p class="eyebrow">مسارات التطبيق</p><h3>أين يعمل الكتاب؟</h3></div><span class="book-side-mark">✦</span></div><div id="bookModuleLinks" class="book-module-links"></div><div class="book-source-note"><strong>المصدر</strong><p id="bookEditionNote">مرجع تعليمي مرفوع داخل المختبر.</p></div></aside><article class="book-results-card"><div class="book-results-head"><div><p class="eyebrow">نتائج الفهرسة</p><h3 id="bookResultsTitle">خريطة الأبواب والفصول</h3></div><span class="status-pill" id="bookResultsCount">0 نتيجة</span></div><div id="bookResults" class="book-results"></div></article></div>
-            <div class="book-application-card"><div><p class="eyebrow">قاعدة مرتبطة بالممارسة</p><h3 id="bookApplicationTitle">اختر نتيجة لتظهر طريقة توظيفها</h3><p id="bookApplicationText">ستظهر هنا روابط القاعدة بالمحاكاة، بنك الأسئلة، المساعد الذكي، المحكمة الافتراضية، وتحليل الأحكام.</p></div><div id="bookApplicationLinks" class="book-application-links"></div></div>
+            <div class="book-application-card"><div><p class="eyebrow" id="bookApplicationEyebrow">قاعدة مرتبطة بالممارسة</p><h3 id="bookApplicationTitle">اختر نتيجة لتظهر طريقة توظيفها</h3><p id="bookApplicationText">ستظهر هنا روابط القاعدة بالمحاكاة، بنك الأسئلة، المساعد الذكي، المحكمة الافتراضية، وتحليل الأحكام.</p><pre id="bookApplicationExcerpt" class="book-application-excerpt hidden"></pre></div><div id="bookApplicationLinks" class="book-application-links"></div></div>
           </section>
 
           <section class="view" id="view-quiz" data-title="بنك الأسئلة التكيّفي">

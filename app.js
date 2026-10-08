@@ -7,9 +7,10 @@
 (() => {
   "use strict";
 
-  const STORAGE_KEY = "yassin-shami-procedural-lab-v2-book";
+  const STORAGE_KEY = "yassin-shami-procedural-lab-v3-corpus";
   const today = new Date().toISOString().slice(0, 10);
   const BOOK = window.PROCEDURAL_BOOK || { meta: {}, parts: [], sections: [], rules: [], quiz: [] };
+  const CORPUS = window.PROCEDURAL_BOOK_CORPUS || { pages: [] };
 
   const scenarios = {
     claim: {
@@ -696,6 +697,10 @@
       .replace(/ى/g, "ي")
       .replace(/ة/g, "ه")
       .replace(/[ـ]/g, "")
+      .replace(/العلان/g, "الاعلان")
+      .replace(/الختصاص/g, "الاختصاص")
+      .replace(/الستئناف/g, "الاستئناف")
+      .replace(/الجراء/g, "الاجراء")
       .replace(/\s+/g, " ")
       .trim();
   }
@@ -710,18 +715,27 @@
   function bookItems() {
     const parts = (BOOK.parts || []).map((part) => ({ type: "part", id: `part-${part.id}`, title: `الجزء ${part.id}: ${part.title}`, label: `ص ${part.pages}`, page: Number(part.pages.split("-")[0]), summary: `موضوعات هذا الجزء: ${part.themes.join("، ")}.`, tags: part.themes, parent: "الأجزاء المرفوعة", tone: "teal" }));
     const principles = (BOOK.rules || []).map((rule) => ({ type: "principle", id: rule.id, title: rule.title, label: rule.area, page: Number((rule.source.match(/ص\s*(\d+)/) || ["", "0"])[1]), summary: rule.principle, tags: rule.tags, source: rule.source, modules: rule.modules, parent: rule.area, tone: "violet" }));
-    return [...bookChapterItems(), ...principles, ...parts];
+    const pages = (CORPUS.pages || []).map((page) => ({ type: "text", id: `text-${page.id}`, title: `مقطع المصدر في الصفحة ${page.printedPage}`, label: `الجزء ${page.part}`, page: page.printedPage, summary: page.text.replace(/\s+/g, " ").slice(0, 420), text: page.text, tags: ["نص المصدر", `الجزء ${page.part}`], source: `الوجيز، ص ${page.printedPage}`, parent: "النص الكامل", tone: "sand" }));
+    return [...bookChapterItems(), ...principles, ...parts, ...pages];
   }
 
   function findBookMatches(text, limit = 3) {
     const query = normalizeBookText(text);
     if (!query) return [];
-    const terms = query.split(/\s+/).filter((term) => term.length > 2);
-    return (BOOK.rules || []).map((rule) => {
+    const stopWords = new Set(["ذلك", "هذه", "هذا", "التي", "الذي", "على", "الى", "إلى", "من", "عن", "في", "مع", "بين", "بعد", "قبل", "حيث", "ليس", "ولا", "كما"]);
+    const terms = query.split(/\s+/).filter((term) => term.length > 2 && !stopWords.has(term));
+    const ruleMatches = (BOOK.rules || []).map((rule) => {
       const haystack = normalizeBookText(`${rule.title} ${rule.principle} ${(rule.tags || []).join(" ")} ${rule.area}`);
-      const score = terms.reduce((total, term) => total + (haystack.includes(term) ? 1 : 0), 0);
-      return { ...rule, matchScore: score };
-    }).filter((rule) => rule.matchScore > 0).sort((a, b) => b.matchScore - a.matchScore).slice(0, limit);
+      const score = terms.reduce((total, term) => total + (haystack.includes(term) || (term.length > 4 && haystack.includes(term.slice(0, -2))) ? 1 : 0), 0) + (haystack.includes(query) ? 2 : 0);
+      return { ...rule, type: "principle", matchScore: score };
+    }).filter((rule) => rule.matchScore > 0);
+    const pageMatches = (CORPUS.pages || []).map((page) => {
+      if (!page._normalized) page._normalized = normalizeBookText(page.text);
+      const score = terms.reduce((total, term) => total + (page._normalized.includes(term) || (term.length > 4 && page._normalized.includes(term.slice(0, -2))) ? 1 : 0), 0) + (page._normalized.includes(query) ? 2 : 0);
+      const excerpt = page.text.replace(/\s+/g, " ").slice(0, 420);
+      return { type: "text", id: `text-${page.id}`, title: `مقطع المصدر في الصفحة ${page.printedPage}`, page: page.printedPage, source: `الوجيز، ص ${page.printedPage}`, principle: excerpt, summary: excerpt, text: page.text, tags: ["نص المصدر", `الجزء ${page.part}`], matchScore: score };
+    }).filter((page) => page.matchScore > 0);
+    return [...ruleMatches, ...pageMatches].sort((a, b) => (b.matchScore - a.matchScore) || (a.type === "principle" ? -1 : 1)).slice(0, limit);
   }
 
   function renderBook() {
@@ -732,20 +746,22 @@
     const query = normalizeBookText(state.bookSearch);
     const filter = state.bookFilter || "all";
     const filtered = items.filter((item) => {
-      const filterMatch = filter === "all" || (filter === "principle" && item.type === "principle") || (filter === "chapter" && item.type === "chapter") || (filter === "part" && item.type === "part");
+      const filterMatch = filter === "all" ? (query || item.type !== "text") : (filter === "principle" && item.type === "principle") || (filter === "chapter" && item.type === "chapter") || (filter === "part" && item.type === "part") || (filter === "text" && item.type === "text");
       if (!filterMatch) return false;
       if (!query) return true;
-      return normalizeBookText(`${item.title} ${item.summary} ${(item.tags || []).join(" ")} ${item.source || ""}`).includes(query);
+      return normalizeBookText(`${item.title} ${item.summary} ${item.text || ""} ${(item.tags || []).join(" ")} ${item.source || ""}`).includes(query);
     });
-    const ordered = query ? filtered : filtered.filter((item) => item.type === "chapter").concat(filtered.filter((item) => item.type !== "chapter"));
+    const order = { chapter: 0, principle: 1, part: 2, text: 3 };
+    const ordered = [...filtered].sort((a, b) => (query ? 0 : (order[a.type] || 9) - (order[b.type] || 9)) || (a.page || 0) - (b.page || 0));
     const visible = ordered.slice(0, 48);
     $("#bookPageCount").textContent = String(BOOK.meta.sourcePageCount || 350);
     $("#bookPartCount").textContent = String(BOOK.meta.sourceParts || 8);
     $("#bookRuleCount").textContent = String((BOOK.rules || []).length);
+    $("#bookTextPageCount").textContent = String(BOOK.meta.sourceTextPageCount || CORPUS.pages.length || 0);
     $("#bookChapterCount").textContent = String((BOOK.sections || []).reduce((total, section) => total + 1 + (section.chapters || []).length, 0));
     $("#bookEditionNote").textContent = BOOK.meta.editionNote || "مرجع تعليمي مرفوع داخل المختبر.";
     $$("#bookFilters button").forEach((button) => button.classList.toggle("active", button.dataset.bookFilter === filter));
-    $("#bookResultsTitle").textContent = query ? `نتائج البحث عن «${state.bookSearch}»` : filter === "principle" ? "القواعد المرتبطة بالممارسة" : filter === "part" ? "الأجزاء المرفوعة" : "خريطة الأبواب والفصول";
+    $("#bookResultsTitle").textContent = query ? `نتائج البحث عن «${state.bookSearch}»` : filter === "principle" ? "القواعد المرتبطة بالممارسة" : filter === "part" ? "الأجزاء المرفوعة" : filter === "text" ? "صفحات النص الكامل" : "خريطة الأبواب والفصول";
     $("#bookResultsCount").textContent = `${filtered.length} نتيجة`;
     const results = $("#bookResults");
     if (!visible.length) {
@@ -770,10 +786,22 @@
     const title = $("#bookApplicationTitle");
     const text = $("#bookApplicationText");
     const links = $("#bookApplicationLinks");
+    const eyebrow = $("#bookApplicationEyebrow");
+    const excerpt = $("#bookApplicationExcerpt");
     if (!title || !text || !links || !item) return;
     title.textContent = item.title;
-    text.textContent = item.type === "principle" ? `${item.principle || item.summary} المرجع: ${item.source || "موضع الكتاب"}.` : `${item.summary} افتح إحدى الأدوات لتطبيق هذا المحور في قرار أو مذكرة أو جلسة.`;
-    const views = item.type === "principle" ? (item.modules || []) : ["simulator", "quiz", "book"];
+    if (item.type === "text") {
+      eyebrow.textContent = "مقطع من النص الكامل";
+      text.textContent = `هذا مقطع مستخرج من ${item.tags?.find((tag) => tag.startsWith("الجزء")) || "الجزء المرفوع"}، الصفحة ${item.page}. استخدمه للفهم والمقارنة، ثم ارجع إلى الأصل عند التحقق.`;
+      excerpt.textContent = item.text || item.summary || "";
+      excerpt.classList.remove("hidden");
+    } else {
+      eyebrow.textContent = "قاعدة مرتبطة بالممارسة";
+      text.textContent = item.type === "principle" ? `${item.principle || item.summary} المرجع: ${item.source || "موضع الكتاب"}.` : `${item.summary} افتح إحدى الأدوات لتطبيق هذا المحور في قرار أو مذكرة أو جلسة.`;
+      excerpt.textContent = "";
+      excerpt.classList.add("hidden");
+    }
+    const views = item.type === "principle" ? (item.modules || []) : item.type === "text" ? ["ai", "judgment", "book"] : ["simulator", "quiz", "book"];
     const labels = { simulator: "اختبر في المحاكاة", court: "افتح المحكمة", ai: "اكتب مذكرة", judgment: "حلّل حكماً", quiz: "اختبر فهمك", map: "شاهد الخريطة", book: "تابع الفهرس" };
     links.innerHTML = [...new Set(views)].filter((view) => labels[view]).map((view) => `<button data-view="${view}">${labels[view]}</button>`).join("");
   }
@@ -827,8 +855,10 @@
       points.push({ tone: "fix", title: "مطلوب من الطالب", text: "أضف واقعة محددة وطلباً نهائياً واضحاً حتى يستطيع المساعد اختبار الصلة بين الوقائع والإجراء." });
     }
     if (bookMatches.length) {
-      sources.unshift(...bookMatches.map((rule) => `${rule.title} · ${rule.source}`));
-      points.unshift({ tone: "book", title: `صلة مباشرة بالكتاب: ${bookMatches[0].title}`, text: `${bookMatches[0].principle} راجع ${bookMatches[0].source} ثم اربط القاعدة بالواقعة التي كتبتها.` });
+      sources.unshift(...bookMatches.map((rule) => `${rule.title} · ${rule.source || `الوجيز، ص ${rule.page || ""}`}`));
+      const matchedText = bookMatches[0].principle || bookMatches[0].summary || "راجع المقطع المرتبط من النص الكامل.";
+      const matchedSource = bookMatches[0].source || `الوجيز، ص ${bookMatches[0].page || ""}`;
+      points.unshift({ tone: "book", title: `صلة مباشرة بالكتاب: ${bookMatches[0].title}`, text: `${matchedText} راجع ${matchedSource} ثم اربط القاعدة بالواقعة التي كتبتها.` });
       score += 4;
     }
     return { score: Math.min(98, score), headline: score > 78 ? "بنية واعدة تحتاج صقلاً" : "مسودة أولية تحتاج استكمالاً", points, sources };
