@@ -9,8 +9,8 @@
       content="منصة تعليمية تفاعلية للمرافعات والتنفيذ الجبري، منجزة من طرف الدكتور ياسين شامي، كلية القانون، جامعة الإمارات العربية المتحدة."
     />
     <title>مختبر ياسين شامي | المرافعات والتنفيذ الجبري</title>
-    <link rel="stylesheet" href="styles.css?v=20261005-lab" />
-    <script defer src="app.js?v=20261005-lab"></script>
+    <link rel="stylesheet" href="styles.css?v=20261008-judgment" />
+    <script defer src="app.js?v=20261008-judgment"></script>
   </head>
   <body>
     <div class="app-shell">
@@ -46,6 +46,11 @@
             <span class="nav-icon">✦</span>
             <span>المساعد الذكي</span>
             <span class="nav-badge accent">AI</span>
+          </button>
+          <button class="nav-item" data-view="judgment">
+            <span class="nav-icon">◈</span>
+            <span>تحليل الأحكام المدنية</span>
+            <span class="nav-badge new">جديد</span>
           </button>
           <button class="nav-item" data-view="quiz">
             <span class="nav-icon">?</span>
@@ -248,6 +253,33 @@
           <section class="view" id="view-ai" data-title="المساعد الذكي">
             <div class="page-intro ai-intro"><div><p class="eyebrow">Draft · Analyze · Improve</p><h2>المساعد الذكي للصياغة</h2><p>مدرب إجرائي يراجع بنية الصحيفة أو الطلب ويقترح أسئلة تحقق، مع إظهار أساس الملاحظة للطالب والأستاذ.</p></div><div class="ai-orb"><span>✦</span><small>AI<br />COACH</small></div></div>
             <div class="ai-layout"><article class="ai-workbench"><div class="workbench-tabs"><button class="workbench-tab active" data-doc-type="claim">صحيفة دعوى</button><button class="workbench-tab" data-doc-type="execution">طلب تنفيذ</button><button class="workbench-tab" data-doc-type="objection">اعتراض / إشكال</button><button class="workbench-tab" data-doc-type="notice">محضر تبليغ</button></div><div class="editor-toolbar"><span>المحرر التدريبي</span><div><button title="تنسيق">B</button><button title="قائمة">☷</button><button title="إضافة مرجع">§</button></div></div><textarea id="aiDraft" placeholder="ابدأ بكتابة مسودة إجرائية...\n\nمثال: تتقدم الشركة المدعية بصحيفة دعوى للمطالبة بقيمة التوريد..."></textarea><div class="editor-footer"><span><i class="save-dot"></i> مسودة محفوظة محلياً</span><span id="draftCount">0 كلمة</span><button class="primary-button" id="analyzeDraft">حلّل المسودة <span>✦</span></button></div></article><aside class="ai-feedback-panel"><div class="feedback-header"><div><p class="eyebrow">مراجعة فورية</p><h3>لوحة المدرب</h3></div><span class="ai-badge">AI</span></div><div id="aiResponse" class="ai-response"><div class="ai-welcome"><div class="welcome-icon">✦</div><h4>جاهز لمراجعة مسودتك</h4><p>سيبحث المساعد عن الاختصاص، الأطراف، الطلبات، المواعيد، والسند القانوني. اكتب أي مسودة ثم اضغط «حلّل».</p><div class="ai-scope"><span>اختصاص</span><span>طلبات</span><span>مواعيد</span><span>سند</span></div></div></div><div class="supervision-bar"><span class="shield">⬢</span><div><strong>إشراف الأستاذ</strong><small>الملاحظات تدريبية ولا تستبدل مراجعة عضو هيئة التدريس.</small></div><label class="switch"><input type="checkbox" id="teacherMode" checked /><span></span></label></div></aside></div><div class="ai-prompts"><p class="eyebrow">أسئلة ذكية سريعة</p><button class="prompt-chip" data-prompt="راجع لي عناصر صحيفة الدعوى واكشف البيانات الناقصة">ما البيانات الناقصة؟</button><button class="prompt-chip" data-prompt="ما المحكمة المختصة في هذا السيناريو؟">اختبر الاختصاص</button><button class="prompt-chip" data-prompt="اقترح سنداً قانونياً للحجز لدى الغير ومواعيده">اقترح السند والمواعيد</button><button class="prompt-chip" data-prompt="افحص خطر البطلان في التبليغ">افحص خطر البطلان</button></div></section>
+
+          <section class="view" id="view-judgment" data-title="تحليل الأحكام المدنية">
+            <div class="page-intro judgment-intro">
+              <div><p class="eyebrow">اقرأ · استخرج · علّق</p><h2>محلّل الأحكام المدنية</h2><p>ضع نص الحكم أو القرار المدني، وسيحوّله المختبر إلى مسودة زمنية ثم إلى تعليق قانوني منظم: الوقائع، الإجراءات، الإشكال، المنطوق، التحليل، والتقييم.</p></div>
+              <div class="judgment-method-badge"><span>◈</span><div><strong>منهجية التعليق على قرار</strong><small>مرحلة المسودة ← التحليل والتعليق</small></div></div>
+            </div>
+            <div class="judgment-method-strip">
+              <div class="judgment-step active"><span>01</span><div><strong>قراءة ومسودة</strong><small>قراءة متكررة ثم الوقائع والأطراف</small></div></div>
+              <div class="judgment-step"><span>02</span><div><strong>الإشكال والمنطوق</strong><small>السؤال القانوني والحل القضائي</small></div></div>
+              <div class="judgment-step"><span>03</span><div><strong>التعليق</strong><small>مقدمة وعرض وخاتمة وتقييم</small></div></div>
+            </div>
+            <div class="judgment-layout">
+              <article class="judgment-input-card">
+                <div class="card-heading"><div><p class="eyebrow">الخطوة الأولى</p><h3>أدخل الحكم القضائي</h3></div><button class="small-button" id="loadJudgmentExample">جرّب مثالاً</button></div>
+                <label class="judgment-label">عنوان أو رقم الحكم <input id="judgmentTitle" type="text" placeholder="مثال: حكم مسؤولية حارس الشيء" /></label>
+                <label class="judgment-file-drop" for="judgmentFile"><input id="judgmentFile" type="file" accept=".pdf,.txt,.md,.html,text/plain,application/pdf" /><span class="judgment-file-icon">↥</span><span><strong>أرفق الحكم أو القرار</strong><small>PDF أو ملف نصي — أو الصق النص مباشرة أدناه</small></span><b>اختيار ملف</b></label>
+                <div class="judgment-file-name" id="judgmentFileName">لم يرفق ملف بعد · النص يبقى على هذا الجهاز</div>
+                <label class="judgment-label judgment-text-label"><span>نص الحكم / القرار <small id="judgmentCharCount">0 كلمة</small></span><textarea id="judgmentText" placeholder="الصق هنا نص الحكم، ويفضل أن يتضمن الوقائع والحيثيات والمنطوق.\n\nيمكنك استعمال حكم مجهول البيانات لأغراض التدريب."></textarea></label>
+                <div class="judgment-source-note"><span>§</span><div><strong>منهجية التحليل المفعّلة</strong><p>استخراج ظروف القضية والمسار القضائي، صياغة الإشكال من الادعاءات والمنطوق، ثم بناء مقدمة وعرض موضوعي وشخصي وخاتمة.</p></div></div>
+                <button class="primary-button full-width" id="analyzeJudgment">حلّل الحكم وفق المنهجية <span>◈</span></button>
+              </article>
+              <article class="judgment-result-card" id="judgmentResult">
+                <div class="judgment-empty"><div class="judgment-empty-icon">◈</div><h3>تقرير التحليل سيظهر هنا</h3><p>ابدأ بإدخال نص الحكم. سيحافظ التقرير على صلته بالحكم نفسه، ولا يحوله إلى بحث نظري منفصل عنه.</p><div class="judgment-empty-list"><span>✓ مسودة الوقائع والإجراءات</span><span>✓ الإشكال القانوني والمنطوق</span><span>✓ تصميم التعليق ومواطن التقييم</span></div></div>
+              </article>
+            </div>
+            <div class="judgment-method-note"><span>✦</span><div><strong>مرجع تربوي ظاهر داخل المنصة</strong><p>بُني هذا المسار على نموذج «التعليق على قرار: منهجية وتطبيق»؛ مع التنبيه إلى القراءة المتكررة، الموضوعية، تتبع الاجتهاد والفقه، والربط الدائم بين القاعدة ووقائع الحكم. الأداة تدريبية ويشرف الأستاذ على المخرج النهائي.</p></div><a href="https://www.josooor.com/pdfs/fourteenth/first/33.pdf" target="_blank" rel="noopener">فتح المرجع ↗</a></div>
+          </section>
 
           <section class="view" id="view-quiz" data-title="بنك الأسئلة التكيّفي">
             <div class="page-intro quiz-intro"><div><p class="eyebrow">اختبر · تكيف · عالج الفجوة</p><h2>بنك الأسئلة التكيّفي</h2><p>أسئلة قصيرة تتغير بحسب إجابتك، وتحوّل الخطأ إلى مسار مراجعة قابل للتتبع.</p></div><div class="quiz-score"><span>مؤشر الإتقان</span><strong id="quizMastery">0%</strong><small id="quizProgressLabel">السؤال 1 من 5</small></div></div>

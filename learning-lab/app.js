@@ -295,6 +295,10 @@
     courtTranscript: [],
     noticeResult: null,
     executionChoice: null,
+    judgmentTitle: "",
+    judgmentText: "",
+    judgmentFileName: "",
+    judgmentAnalysis: null,
     quizQueue: [0, 1, 2, 3, 4],
     quizIndex: 0,
     quizSelection: null,
@@ -314,6 +318,9 @@
       if (!Array.isArray(merged.quizQueue) || !merged.quizQueue.length) merged.quizQueue = [0, 1, 2, 3, 4];
       if (!Array.isArray(merged.quizHistory)) merged.quizHistory = [];
       if (!Number.isInteger(merged.quizIndex)) merged.quizIndex = 0;
+      if (typeof merged.judgmentTitle !== "string") merged.judgmentTitle = "";
+      if (typeof merged.judgmentText !== "string") merged.judgmentText = "";
+      if (typeof merged.judgmentFileName !== "string") merged.judgmentFileName = "";
       return merged;
     } catch (error) {
       return { ...defaultState };
@@ -370,6 +377,7 @@
     if (view === "simulator") renderSimulator();
     if (view === "court") renderCourt();
     if (view === "ai") renderAI();
+    if (view === "judgment") renderJudgment();
     if (view === "quiz") renderQuiz();
     if (view === "map") renderMap();
     if (view === "notice") renderNotice();
@@ -731,6 +739,148 @@
     response.innerHTML = `<div class="ai-result-score"><span class="score-ring">${escapeHtml(result.score || 0)}%</span><div><strong>${escapeHtml(result.headline || "مراجعة أولية")}</strong><small>مؤشر تدريبي قابل للمراجعة مع الأستاذ</small></div></div><div class="ai-feedback-list">${points.map((point) => `<div class="ai-feedback-item ${escapeHtml(point.tone || "")}\"><strong>${escapeHtml(point.title)}</strong><p>${escapeHtml(point.text)}</p></div>`).join("")}</div><div class="ai-sources"><strong>مراجع مقترحة:</strong> ${(result.sources || []).map((source) => `<span>${escapeHtml(source)}</span>`).join("")}</div>`;
   }
 
+  function judgmentSentences(text) {
+    return text
+      .replace(/\u00a0/g, " ")
+      .replace(/\r/g, "")
+      .split(/\n+|(?<=[.!؟؛])\s+/u)
+      .map((sentence) => sentence.replace(/\s+/g, " ").trim())
+      .filter((sentence) => sentence.length > 16);
+  }
+
+  function uniqueJudgment(items) {
+    return [...new Set(items.map((item) => String(item || "").trim()).filter(Boolean))];
+  }
+
+  function pickJudgment(sentences, patterns, limit = 4) {
+    return uniqueJudgment(sentences.filter((sentence) => patterns.some((pattern) => pattern.test(sentence)))).slice(0, limit);
+  }
+
+  function judgmentList(items, empty = "لم تُستخرج هذه الخانة آلياً؛ راجع النص الأصلي وأكملها مع الأستاذ.") {
+    const values = items.length ? items : [empty];
+    return values.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+  }
+
+  function analyzeJudgmentLocal(text, title = "حكم مدني غير معنْون") {
+    const sentences = judgmentSentences(text);
+    const facts = pickJudgment(sentences, [/بتاريخ|وقع|حادث|عقد|ضرر|إصابة|اتفاق|واقعة|أقام|استأجر|تعاقد|أدى|نشأ/u], 5);
+    const parties = pickJudgment(sentences, [/المدعي|المدعى عليه|الطاعن|المطعون عليه|المستأنف|المستأنف عليه|طالب|ضد/u], 5);
+    const claims = pickJudgment(sentences, [/يلتمس|طلب|طلبات|دفع|يدفع|احتج|أسس|يستند|ينعى|تمسك/u], 5);
+    const procedure = pickJudgment(sentences, [/محكمة|مجلس|ابتدائي|استئناف|نقض|طعن|حكم|قرار|قضت|أيدت|نقضت|إحالة/u], 6);
+    const operative = pickJudgment(sentences, [/لهذه الأسباب|حكمت المحكمة|قضت المحكمة|قضت|حكمت|منطوق|أيدت|نقضت|رفضت|قبلت|صرحت/u], 4);
+    const legalBases = pickJudgment(sentences, [/المادة|الفصل|القانون|مرسوم|قرار تشريعي|قانون/u], 6);
+    const subjectLines = pickJudgment(sentences, [/مسؤولية|تعويض|عقد|بطلان|اختصاص|حيازة|إثبات|تنفيذ|ملكية|فسخ|إخلال|ضرر/u], 4);
+    const dates = uniqueJudgment((text.match(/(?:بتاريخ|في|يوم)\s*\d{1,4}[\/.-]\d{1,2}[\/.-]\d{1,4}/gu) || []).slice(0, 6));
+    const courts = uniqueJudgment((text.match(/(?:محكمة|مجلس|غرفة)[^،؛.\n]{0,70}/gu) || []).slice(0, 4));
+    const caseNumber = (text.match(/(?:رقم|عدد)\s*[\w\-/]+/u) || [""])[0];
+    const lower = text.toLowerCase();
+    let issue;
+    if (lower.includes("مسؤولية حارس") || lower.includes("حارس الشيء")) issue = "ما مدى توافر شروط مسؤولية حارس الشيء، وما وسائل دفعها، وكيف طبقتها المحكمة على وقائع النازلة؟";
+    else if (lower.includes("اختصاص")) issue = "ما مدى اختصاص الجهة القضائية بالفصل في النزاع، وما الأثر المترتب على سلامة أو مخالفة قواعد الاختصاص؟";
+    else if (lower.includes("بطلان") || lower.includes("إعلان") || lower.includes("تبليغ")) issue = "ما مدى صحة الإجراء محل النزاع، وما أثر العيب المدعى به على حقوق الدفاع وعلى النتيجة القضائية؟";
+    else if (lower.includes("عقد") || lower.includes("فسخ") || lower.includes("إخلال")) issue = "ما القاعدة التي تحكم الالتزام أو الإخلال العقدي محل النزاع، وكيف أسقطتها المحكمة على الوقائع والأدلة؟";
+    else if (lower.includes("تعويض") || lower.includes("ضرر")) issue = "ما شروط قيام المسؤولية واستحقاق التعويض، وهل أقامت المحكمة صلة كافية بين الفعل والضرر والنتيجة؟";
+    else issue = "ما القاعدة القانونية التي تحكم النزاع، وكيف انتقلت المحكمة من الوقائع والادعاءات إلى الحل الوارد في المنطوق؟";
+
+    const summaryParts = uniqueJudgment([...facts.slice(0, 2), ...procedure.slice(0, 2), ...claims.slice(0, 1)]);
+    const summary = summaryParts.length ? summaryParts.join(" ") : "يحتاج الحكم إلى استخراج يدوي للوقائع والإجراءات قبل تحرير المقدمة.";
+    const intro = `يتناول ${title} نزاعاً مدنياً يدور حول: ${issue} وتتلخص وقائعه وإجراءاته في: ${summary} ثم انتهت المحكمة إلى الحل الآتي: ${operative[0] || "يجب نقل المنطوق بدقة من الحكم الأصلي."}`;
+    const objective = legalBases.length
+      ? `تبدأ القراءة الموضوعية من ${legalBases.slice(0, 3).join("، ")}، ثم تفحص كيفية تفسير المحكمة للنص وربطه بوقائع الحكم. يجب مقارنة هذا التطبيق بالاجتهاد القضائي والاتجاه الفقهي ذي الصلة، لا الاكتفاء بترديد النتيجة.`
+      : "لم يظهر في النص المقدم رقم مادة أو فصل واضح؛ أضف النصوص التي بنت عليها المحكمة حكمها، ثم اختبر وضوحها وتفسيرها وصلتها بالوقائع.";
+    const personal = operative.length
+      ? `التقييم الأولي: يظهر أن مركز التحليل يجب أن ينصب على تسبيب المحكمة قبل منطوقها، وعلى سؤال ما إذا كانت النتيجة قد التزمت بالقاعدة ووزعت عبء الإثبات توزيعاً سليماً. ${operative[0]}`
+      : "التقييم الشخصي مؤجل إلى حين إدخال منطوق الحكم وحيثياته كاملة؛ لا يصح تقييم حكم دون معرفة الطريق الذي سلكته المحكمة.";
+    const conclusion = "تخلص المسودة إلى أن قيمة الحكم لا تُقاس بالمنطوق وحده، بل بسلامة الانتقال من الوقائع إلى القاعدة ثم إلى النتيجة. بعد استكمال النصوص والاجتهادات السابقة، حدّد هل يكرّس الحكم اتجاهاً مستقراً أم يمثل تحولاً أو تمييزاً عن اتجاه سابق.";
+    const missing = [];
+    if (facts.length < 2) missing.push("الوقائع وتسلسلها الزمني");
+    if (!parties.length) missing.push("أطراف النزاع وموضوعه");
+    if (!claims.length) missing.push("طلبات الخصوم ودفوعهم");
+    if (!procedure.length) missing.push("المراحل القضائية السابقة");
+    if (!operative.length) missing.push("المنطوق أو الحل القضائي");
+    if (!legalBases.length) missing.push("النصوص القانونية المستند إليها");
+    const checks = [
+      { label: "ظروف القضية", done: facts.length >= 2 },
+      { label: "الأطراف والطلبات", done: parties.length > 0 && claims.length > 0 },
+      { label: "المسار القضائي", done: procedure.length > 0 },
+      { label: "الإشكال والمنطوق", done: operative.length > 0 },
+      { label: "النصوص القانونية", done: legalBases.length > 0 },
+    ];
+    const score = Math.round((checks.filter((item) => item.done).length / checks.length) * 100);
+    return { title, score, wordCount: text.split(/\s+/).filter(Boolean).length, dates, courts, caseNumber, facts, parties, claims, procedure, operative, legalBases, subjectLines, issue, intro, objective, personal, conclusion, missing, checks, reference: "التعليق على قرار: منهجية وتطبيق، مجلة المعرفة، العدد 14، مارس 2024، ص 421–428" };
+  }
+
+  function renderJudgment() {
+    const textField = $("#judgmentText");
+    const titleField = $("#judgmentTitle");
+    if (!textField || !titleField) return;
+    if (document.activeElement !== textField) textField.value = state.judgmentText || "";
+    if (document.activeElement !== titleField) titleField.value = state.judgmentTitle || "";
+    $("#judgmentCharCount").textContent = `${wordCount(textField.value)} كلمة`;
+    $("#judgmentFileName").textContent = state.judgmentFileName ? `مرفق: ${state.judgmentFileName} · يمكنك مراجعة النص في المربع أدناه` : "لم يرفق ملف بعد · النص يبقى على هذا الجهاز";
+    const result = $("#judgmentResult");
+    if (!result) return;
+    if (!state.judgmentAnalysis) {
+      result.innerHTML = '<div class="judgment-empty"><div class="judgment-empty-icon">◈</div><h3>تقرير التحليل سيظهر هنا</h3><p>ابدأ بإدخال نص الحكم. سيحافظ التقرير على صلته بالحكم نفسه، ولا يحوله إلى بحث نظري منفصل عنه.</p><div class="judgment-empty-list"><span>✓ مسودة الوقائع والإجراءات</span><span>✓ الإشكال القانوني والمنطوق</span><span>✓ تصميم التعليق ومواطن التقييم</span></div></div>';
+      return;
+    }
+    const analysis = state.judgmentAnalysis;
+    const list = judgmentList;
+    result.innerHTML = `<div class="judgment-report"><div class="judgment-report-head"><div><p class="eyebrow">تقرير تحليل أولي</p><h3>${escapeHtml(analysis.title)}</h3><small>${escapeHtml(analysis.reference)}</small></div><span class="judgment-score">${analysis.score}%<small>اكتمال الاستخراج</small></span></div><div class="judgment-kpi-grid"><div><span>عدد الكلمات</span><strong>${analysis.wordCount}</strong></div><div><span>التواريخ</span><strong>${analysis.dates.length}</strong></div><div><span>النصوص</span><strong>${analysis.legalBases.length}</strong></div><div><span>النواقص</span><strong>${analysis.missing.length}</strong></div></div><div class="judgment-report-section"><div class="judgment-section-head"><span>01</span><div><p class="eyebrow">مرحلة المسودة</p><h4>ظروف القضية وبناء الملف</h4></div></div><div class="judgment-two-col"><div><h5>الوقائع المستخرجة</h5><ul>${list(analysis.facts)}</ul></div><div><h5>الأطراف والطلبات</h5><ul>${list(uniqueJudgment([...analysis.parties, ...analysis.claims]))}</ul></div></div><div class="judgment-timeline"><strong>المسار القضائي</strong><ul>${list(analysis.procedure, "لم تظهر مراحل قضائية صريحة؛ استخرج المحكمة الابتدائية والاستئناف والنقض إن وجدت.")}</ul></div></div><div class="judgment-report-section"><div class="judgment-section-head"><span>02</span><div><p class="eyebrow">الإشكال والمنطوق</p><h4>من الادعاءات إلى السؤال القانوني</h4></div></div><div class="judgment-issue"><span>الإشكال القانوني المقترح</span><p>${escapeHtml(analysis.issue)}</p></div><div class="judgment-two-col"><div><h5>النصوص والأسس الظاهرة</h5><ul>${list(analysis.legalBases, "لم يظهر نص قانوني محدد في المقطع المدخل.")}</ul></div><div><h5>المنطوق / الحل القضائي</h5><ul>${list(analysis.operative, "انقل منطوق الحكم حرفياً من النسخة الأصلية قبل اعتماد التقرير.")}</ul></div></div></div><div class="judgment-report-section"><div class="judgment-section-head"><span>03</span><div><p class="eyebrow">التحليل والتعليق</p><h4>تصميم قابل للتحرير مع الأستاذ</h4></div></div><div class="judgment-writing-block"><h5>مقدمة مقترحة</h5><p>${escapeHtml(analysis.intro)}</p></div><div class="judgment-writing-block objective"><h5>العرض الموضوعي</h5><p>${escapeHtml(analysis.objective)}</p><div class="judgment-evidence"><strong>مواطن الربط:</strong><ul>${list(analysis.subjectLines, "حدّد القاعدة والوقائع التي طبقتها المحكمة في كل نقطة.")}</ul></div></div><div class="judgment-writing-block personal"><h5>التقييم الشخصي</h5><p>${escapeHtml(analysis.personal)}</p></div><div class="judgment-writing-block"><h5>خاتمة مقترحة</h5><p>${escapeHtml(analysis.conclusion)}</p></div></div><div class="judgment-checklist"><div><p class="eyebrow">قائمة المراجعة</p><h4>قبل تسليم التعليق</h4></div><div class="judgment-check-items">${analysis.checks.map((item) => `<span class="${item.done ? "done" : "pending"}">${item.done ? "✓" : "!"} ${escapeHtml(item.label)}</span>`).join("")}</div>${analysis.missing.length ? `<p class="judgment-missing"><strong>يحتاج استكمالاً:</strong> ${escapeHtml(analysis.missing.join("، "))}</p>` : `<p class="judgment-ready">اكتمل الاستخراج الأولي. راجع كل فقرة على الحكم الأصلي قبل اعتمادها.</p>`}</div><div class="judgment-disclaimer">هذا تحليل تعليمي أولي يعتمد على النص المدخل. لا يمثل رأياً قضائياً أو استشارة قانونية، ولا يحل محل القراءة المتكررة للحكم وإشراف الأستاذ.</div></div>`;
+  }
+
+  async function handleJudgmentFile(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    state.judgmentFileName = file.name;
+    saveState();
+    const extension = file.name.toLowerCase().split(".").pop();
+    if (["txt", "md", "html"].includes(extension) || file.type.startsWith("text/")) {
+      try {
+        state.judgmentText = await file.text();
+        saveState();
+        $("#judgmentText").value = state.judgmentText;
+        $("#judgmentCharCount").textContent = `${wordCount(state.judgmentText)} كلمة`;
+        showToast("تم استيراد النص. راجعه ثم ابدأ التحليل.");
+      } catch (error) {
+        showToast("تعذر قراءة الملف النصي؛ الصق النص يدوياً.");
+      }
+    } else {
+      showToast("تم إرفاق ملف الحكم. لأعلى دقة تعليمية، الصق نصه في المربع ثم حلّله.");
+    }
+    renderJudgment();
+  }
+
+  function loadJudgmentExample() {
+    const exampleTitle = "حكم مدني في مسؤولية حارس الشيء";
+    const exampleText = "أقام المدعي دعوى مدنية ضد مالك فندق طالباً التعويض عن إصابة لحقت به بعد سقوطه في حفرة المصعد أثناء إقامته بالفندق. قدم المدعي شواهد طبية ورسالة صادرة عن إدارة الفندق تثبت وقوع الحادث والضرر، بينما طلب المدعى عليه إدخال شركة التأمين في الخصومة. دفعت شركة التأمين بعدم الإشعار وبأن المدعي لم يثبت سبب الحادث ولا العلاقة السببية. قضت المحكمة الابتدائية بعدم قبول الدعوى، ثم أيدت محكمة الاستئناف الحكم تأسيساً على نقص الإثبات. طعن المدعي بالنقض ناعياً تحريف الوقائع والخطأ في التعليل، وتمسك بأن المصعد تدخل إيجابياً في إحداث الضرر وأن حراسة الشيء مفترضة في مالكه. تتمثل المسألة القانونية في شروط مسؤولية حارس الشيء ووسائل دفعها ومدى توافرها في النازلة. واستند الحكم إلى الفصل 88 من قانون الالتزامات والعقود، وانتهت محكمة النقض إلى نقض القرار المطعون فيه لأن المسؤولية الخاصة تقوم على خطأ مفترض ولا يكفي إلزام المضرور بإثبات الخطأ بذات الطريقة المقررة للمسؤولية العامة.";
+    state.judgmentTitle = exampleTitle;
+    state.judgmentText = exampleText;
+    state.judgmentFileName = "مثال_تدريبي_مجهول.txt";
+    state.judgmentAnalysis = null;
+    saveState();
+    renderJudgment();
+    showToast("تم تحميل مثال تدريبي مجهول. اضغط «حلّل الحكم وفق المنهجية».");
+  }
+
+  function analyzeJudgment() {
+    const text = $("#judgmentText").value.trim();
+    const title = $("#judgmentTitle").value.trim() || "حكم مدني غير معنْون";
+    if (text.length < 120) {
+      showToast("أدخل نصاً أطول يتضمن الوقائع والحيثيات والمنطوق حتى يكون التحليل مفيداً.");
+      return;
+    }
+    state.judgmentTitle = title;
+    state.judgmentText = text;
+    state.judgmentAnalysis = analyzeJudgmentLocal(text, title);
+    state.files += 1;
+    addActivity("تحليل حكم مدني", title, `${state.judgmentAnalysis.score}%`);
+    saveState();
+    renderJudgment();
+    renderDashboard();
+    showToast("اكتمل التقرير الأولي. راجع مواطن الاستكمال مع الأستاذ.");
+  }
+
   function renderNotice() {
     if (!$("#noticeDate").value) $("#noticeDate").value = today;
     if (!state.noticeResult) return;
@@ -828,6 +978,7 @@
       `المسار الحالي: ${currentScenario().title}`,
       `رصيد المحاكاة: ${state.simScore} نقطة`,
       `الملفات المنجزة: ${state.files}`,
+      ...(state.judgmentAnalysis ? ["", `آخر حكم محلل: ${state.judgmentAnalysis.title}`, `اكتمال الاستخراج: ${state.judgmentAnalysis.score}%`, `الإشكال المقترح: ${state.judgmentAnalysis.issue}`] : []),
       "",
       "السجل:",
       ...state.activity.map((item) => `- ${item.title} | ${item.detail} | ${item.score || "محفوظ"} | ${item.at}`),
@@ -880,6 +1031,11 @@
     $("#courtSpeak").addEventListener("click", courtSpeak);
     $("#aiDraft").addEventListener("input", (event) => { state.draft = event.target.value; $("#draftCount").textContent = `${wordCount(event.target.value)} كلمة`; saveState(); });
     $("#analyzeDraft").addEventListener("click", askAI);
+    $("#judgmentFile").addEventListener("change", handleJudgmentFile);
+    $("#loadJudgmentExample").addEventListener("click", loadJudgmentExample);
+    $("#judgmentTitle").addEventListener("input", (event) => { state.judgmentTitle = event.target.value; saveState(); });
+    $("#judgmentText").addEventListener("input", (event) => { state.judgmentText = event.target.value; $("#judgmentCharCount").textContent = `${wordCount(event.target.value)} كلمة`; saveState(); });
+    $("#analyzeJudgment").addEventListener("click", analyzeJudgment);
     $("#generateNotice").addEventListener("click", buildNotice);
     $("#clearExecution").addEventListener("click", () => { state.executionChoice = null; saveState(); renderExecution(); showToast("تمت إعادة غرفة التنفيذ إلى نقطة الاختيار."); });
     $("#sourceFilter").addEventListener("click", (event) => { const filterButton = event.target.closest("button[data-filter]"); if (!filterButton) return; $$("#sourceFilter button").forEach((button) => button.classList.toggle("active", button === filterButton)); renderSources(); });
