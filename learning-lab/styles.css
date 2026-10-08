@@ -325,3 +325,4 @@ a { color: inherit; }
 .legal-reader-links button, .legal-original-link { padding: 7px 8px; border: 1px solid #cce3e0; border-radius: 7px; color: var(--teal-dark); background: #effaf8; cursor: pointer; font: inherit; font-size: 8px; font-weight: 800; white-space: nowrap; }
 .legal-reader-links button:hover, .legal-original-link:hover { background: #dcf4ef; }
 .legal-original-link { display: inline-block; text-decoration: none; }
+.legal-source-annotation { padding: 8px 10px; margin: 9px 0; border-right: 3px solid #e4b26f; border-radius: 7px; color: #8a6b43; background: #fffaf2; font-size: 8px; line-height: 1.7; }
