@@ -1287,9 +1287,9 @@
   }
 
   const executionChoices = {
-    garnishment: { title: "الحجز لدى الغير", description: "أموال المدين الموجودة لدى بنك أو عميل أو جهة أخرى.", steps: ["أمر الحجز", "إعلان الغير", "تقرير الغير خلال الميعاد", "تحصيل المبلغ", "فتح التوزيع"], note: "المادتان 252 و256: يتحول الغير إلى طرف إجرائي في سلسلة الحجز والتقرير." },
-    movables: { title: "حجز المنقولات", description: "أموال منقولة مملوكة للمدين قابلة للجرد والبيع وفق الإجراء.", steps: ["أمر الحجز", "الانتقال والجرد", "محضر الحجز", "البيع بالمزاد", "إيداع الحصيلة"], note: "أضف إلى الملف وصف المنقولات ومكانها ومحضر الحجز قبل اختبار البيع." },
-    realestate: { title: "حجز العقار", description: "عقار مسجل باسم المدين، مع مراعاة بيانات القيد والبيع.", steps: ["التحقق من القيد", "إعلان الحجز", "وصف العقار", "إجراءات البيع", "إيداع الحصيلة"], note: "تظهر في المسار متطلبات التحقق من الملكية ووصف المال قبل البيع والتوزيع." },
+    garnishment: { title: "الحجز لدى الغير", description: "أموال المدين الموجودة لدى بنك أو عميل أو جهة أخرى.", steps: ["أمر الحجز", "إعلان الغير", "تقرير الغير خلال الميعاد", "تحصيل المبلغ", "فتح التوزيع"], note: "المواد 252–263: يتحول الغير إلى طرف إجرائي في سلسلة الأمر والإعلان والتقرير بما في الذمة ثم الوفاء أو التنفيذ." },
+    movables: { title: "حجز المنقولات", description: "أموال منقولة مملوكة للمدين قابلة للجرد والبيع وفق الإجراء.", steps: ["أمر الحجز", "الانتقال والجرد", "محضر الحجز", "البيع بالمزاد", "إيداع الحصيلة"], note: "المواد 264–282: وثّق محضر الحجز والحراسة والإعلان قبل اختبار البيع بالمزاد ودعوى الاسترداد." },
+    realestate: { title: "حجز العقار", description: "عقار مسجل باسم المدين، مع مراعاة بيانات القيد والبيع.", steps: ["التحقق من القيد", "إعلان الحجز", "وصف العقار", "إجراءات البيع", "إيداع الحصيلة"], note: "المواد 285–305: افحص التسجيل والإخطار والتثمين وشروط البيع ورسو المزاد قبل الانتقال إلى التوزيع." },
   };
 
   function renderExecution() {
@@ -1300,7 +1300,7 @@
     const bookNote = bookMatch ? `مرجع الوجيز: ${bookMatch.title} · ${bookMatch.source}.` : "";
     $("#executionFeedback").innerHTML = `<div class="execution-path"><h4>تسلسل ${escapeHtml(choice.title)}</h4><div class="path-steps">${choice.steps.map((step) => `<span>${escapeHtml(step)}</span>`).join("")}</div><div class="execution-note"><strong>§</strong><span>${escapeHtml(choice.note)} ${escapeHtml(bookNote)}</span></div></div>`;
     const timeline = $("#executionTimeline");
-    timeline.innerHTML = `<div class="timeline-item completed"><span>✓</span><div><strong>إيداع طلب التنفيذ</strong><small>المادة 206 · تحت إشراف قاضي التنفيذ</small></div></div><div class="timeline-item completed"><span>✓</span><div><strong>إعلان السند التنفيذي</strong><small>انقضاء مهلة الوفاء الطوعي</small></div></div><div class="timeline-item completed"><span>✓</span><div><strong>اختيار ${escapeHtml(choice.title)}</strong><small>تم إنشاء مسار إجرائي افتراضي</small></div></div><div class="timeline-item pending"><span>04</span><div><strong>${escapeHtml(choice.steps[1])}</strong><small>الخطوة التالية في المحاكاة</small></div></div><div class="timeline-item"><span>05</span><div><strong>التحصيل والتوزيع</strong><small>يفتح بعد استكمال التسلسل</small></div></div>`;
+    timeline.innerHTML = `<div class="timeline-item completed"><span>✓</span><div><strong>إيداع طلب التنفيذ</strong><small>المادة 206 · تحت إشراف قاضي التنفيذ</small></div></div><div class="timeline-item completed"><span>✓</span><div><strong>إعلان السند التنفيذي</strong><small>المادة 233 · مهلة الوفاء الطوعي</small></div></div><div class="timeline-item completed"><span>✓</span><div><strong>اختيار ${escapeHtml(choice.title)}</strong><small>المواد 252–305 بحسب المال المحجوز</small></div></div><div class="timeline-item pending"><span>04</span><div><strong>${escapeHtml(choice.steps[1])}</strong><small>الخطوة التالية في المحاكاة</small></div></div><div class="timeline-item"><span>05</span><div><strong>التحصيل والتوزيع</strong><small>المادة 310 · يفتح بعد استكمال التسلسل</small></div></div>`;
   }
 
   function chooseExecution(choice) {
