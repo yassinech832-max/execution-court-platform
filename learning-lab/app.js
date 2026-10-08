@@ -7,8 +7,9 @@
 (() => {
   "use strict";
 
-  const STORAGE_KEY = "yassin-shami-procedural-lab-v1";
+  const STORAGE_KEY = "yassin-shami-procedural-lab-v2-book";
   const today = new Date().toISOString().slice(0, 10);
+  const BOOK = window.PROCEDURAL_BOOK || { meta: {}, parts: [], sections: [], rules: [], quiz: [] };
 
   const scenarios = {
     claim: {
@@ -280,6 +281,10 @@
     },
   ];
 
+  const bookQuizStartIndex = quizQuestions.length;
+  quizQuestions.push(...(BOOK.quiz || []));
+  const initialQuizQueue = [0, 1, 2, 3, 4, ...Array.from({ length: Math.min(5, (BOOK.quiz || []).length) }, (_, index) => bookQuizStartIndex + index)];
+
   const defaultState = {
     view: "dashboard",
     scenario: "claim",
@@ -299,7 +304,10 @@
     judgmentText: "",
     judgmentFileName: "",
     judgmentAnalysis: null,
-    quizQueue: [0, 1, 2, 3, 4],
+    bookFilter: "all",
+    bookSearch: "",
+    bookSelected: "",
+    quizQueue: initialQuizQueue,
     quizIndex: 0,
     quizSelection: null,
     quizHistory: [],
@@ -315,9 +323,11 @@
       if (!Array.isArray(merged.decisionHistory)) merged.decisionHistory = [];
       if (!Array.isArray(merged.activity)) merged.activity = [];
       if (!Array.isArray(merged.courtTranscript)) merged.courtTranscript = [];
-      if (!Array.isArray(merged.quizQueue) || !merged.quizQueue.length) merged.quizQueue = [0, 1, 2, 3, 4];
+      if (!Array.isArray(merged.quizQueue) || !merged.quizQueue.length) merged.quizQueue = [...initialQuizQueue];
       if (!Array.isArray(merged.quizHistory)) merged.quizHistory = [];
       if (!Number.isInteger(merged.quizIndex)) merged.quizIndex = 0;
+      if (!bookItems().some((item) => item.id === merged.bookSelected)) merged.bookSelected = BOOK.rules[0]?.id || "";
+      if (!BOOK.sections.length && merged.bookFilter !== "all") merged.bookFilter = "all";
       if (typeof merged.judgmentTitle !== "string") merged.judgmentTitle = "";
       if (typeof merged.judgmentText !== "string") merged.judgmentText = "";
       if (typeof merged.judgmentFileName !== "string") merged.judgmentFileName = "";
@@ -378,6 +388,7 @@
     if (view === "court") renderCourt();
     if (view === "ai") renderAI();
     if (view === "judgment") renderJudgment();
+    if (view === "book") renderBook();
     if (view === "quiz") renderQuiz();
     if (view === "map") renderMap();
     if (view === "notice") renderNotice();
@@ -451,8 +462,9 @@
     $("#simPrev").style.opacity = state.stage === 0 ? ".45" : "1";
     $("#simNext").disabled = !chosen?.correct;
     $("#simNext").textContent = state.stage === scenario.stages.length - 1 ? "إنهاء السيناريو ✓" : "المحطة التالية →";
+    const bookMatch = findBookMatches(`${stage.short} ${stage.prompt} ${stage.sourceText}`, 1)[0];
     $("#simSourceTitle").textContent = stage.sourceTitle;
-    $("#simSourceText").textContent = stage.sourceText;
+    $("#simSourceText").textContent = bookMatch ? `${stage.sourceText} · ${bookMatch.title} (${bookMatch.source})` : stage.sourceText;
     $("#simHint").textContent = stage.hint;
     renderLedger();
     $$(".scenario-tab").forEach((tab) => tab.classList.toggle("active", tab.dataset.scenario === state.scenario));
@@ -527,6 +539,12 @@
     transcript.scrollTop = transcript.scrollHeight;
     $("#courtTurnLabel").textContent = `الدور: ${roleLabel(state.role)}`;
     $$(".role-choice").forEach((choice) => choice.classList.toggle("active", choice.dataset.role === state.role));
+    const lastLine = state.courtTranscript[state.courtTranscript.length - 1]?.text || "منازعة تنفيذ وإعلان وسند";
+    const bookMatch = findBookMatches(lastLine, 1)[0];
+    if (bookMatch) {
+      $("#courtRuleTitle").textContent = bookMatch.title;
+      $("#courtRuleSource").textContent = bookMatch.source;
+    }
   }
 
   function roleLabel(role) {
@@ -544,9 +562,11 @@
     if (state.role === "officer") statement = action === "officer" ? "أبرز محضر التنفيذ، وأثبت تواريخ الإعلان والحجز والتقرير في السجل الإلكتروني." : "أوضح أن دوري يقتصر على تنفيذ قرار قاضي التنفيذ وإثبات الواقعة، لا الفصل في المنازعة.";
     if (state.role === "notice") statement = "أثبت واقعة التبليغ ووسيلته وهوية المستلم أو الرفض، وأضع أثر الاستلام في متناول المحكمة.";
     if (state.role === "judge") statement = data.judge;
+    const bookMatch = findBookMatches(`${action} ${statement}`, 1)[0];
+    const judgeReason = bookMatch ? `${data.judge} المرجع التدريبي: ${bookMatch.title} (${bookMatch.source}).` : data.judge;
     const now = new Date().toLocaleTimeString("ar-AE", { hour: "2-digit", minute: "2-digit" });
     state.courtTranscript.push({ role: roleByState[state.role], speaker: speakerByRole[state.role], text: statement, at: now });
-    state.courtTranscript.push({ role: "judge", speaker: "القاضي الافتراضي", text: data.judge, at: now });
+    state.courtTranscript.push({ role: "judge", speaker: "القاضي الافتراضي", text: judgeReason, at: now });
     state.files += 1;
     addActivity("مداخلة في المحكمة الافتراضية", roleLabel(state.role), "محضر جلسة");
     saveState();
@@ -570,7 +590,7 @@
   }
 
   function renderQuiz() {
-    if (!Array.isArray(state.quizQueue) || !state.quizQueue.length) state.quizQueue = [0, 1, 2, 3, 4];
+    if (!Array.isArray(state.quizQueue) || !state.quizQueue.length) state.quizQueue = [...initialQuizQueue];
     const queueLength = state.quizQueue.length;
     const attempts = state.quizHistory.length;
     const correct = state.quizHistory.filter((item) => item.correct).length;
@@ -632,7 +652,7 @@
 
   function advanceQuiz() {
     if (state.quizIndex >= state.quizQueue.length) {
-      state.quizQueue = [0, 1, 2, 3, 4];
+      state.quizQueue = [...initialQuizQueue];
       state.quizIndex = 0;
       state.quizSelection = null;
       saveState();
@@ -667,10 +687,117 @@
     $$(".map-canvas").forEach((canvas) => canvas.classList.toggle("hidden", canvas.id !== active));
   }
 
+  function normalizeBookText(value) {
+    return String(value || "")
+      .toLowerCase()
+      .normalize("NFKD")
+      .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, "")
+      .replace(/[إأآ]/g, "ا")
+      .replace(/ى/g, "ي")
+      .replace(/ة/g, "ه")
+      .replace(/[ـ]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function bookChapterItems() {
+    return (BOOK.sections || []).flatMap((section) => [
+      { type: "chapter", id: `section-${section.id}`, title: section.title, label: section.number, page: section.page, summary: section.summary, tags: ["باب", section.title], parent: section.title, tone: section.tone },
+      ...(section.chapters || []).map((chapter) => ({ type: "chapter", id: `${section.id}:${chapter.id}`, title: chapter.title, label: section.number, page: chapter.page, summary: chapter.summary, tags: [section.title, "فصل"], parent: section.title, tone: section.tone })),
+    ]);
+  }
+
+  function bookItems() {
+    const parts = (BOOK.parts || []).map((part) => ({ type: "part", id: `part-${part.id}`, title: `الجزء ${part.id}: ${part.title}`, label: `ص ${part.pages}`, page: Number(part.pages.split("-")[0]), summary: `موضوعات هذا الجزء: ${part.themes.join("، ")}.`, tags: part.themes, parent: "الأجزاء المرفوعة", tone: "teal" }));
+    const principles = (BOOK.rules || []).map((rule) => ({ type: "principle", id: rule.id, title: rule.title, label: rule.area, page: Number((rule.source.match(/ص\s*(\d+)/) || ["", "0"])[1]), summary: rule.principle, tags: rule.tags, source: rule.source, modules: rule.modules, parent: rule.area, tone: "violet" }));
+    return [...bookChapterItems(), ...principles, ...parts];
+  }
+
+  function findBookMatches(text, limit = 3) {
+    const query = normalizeBookText(text);
+    if (!query) return [];
+    const terms = query.split(/\s+/).filter((term) => term.length > 2);
+    return (BOOK.rules || []).map((rule) => {
+      const haystack = normalizeBookText(`${rule.title} ${rule.principle} ${(rule.tags || []).join(" ")} ${rule.area}`);
+      const score = terms.reduce((total, term) => total + (haystack.includes(term) ? 1 : 0), 0);
+      return { ...rule, matchScore: score };
+    }).filter((rule) => rule.matchScore > 0).sort((a, b) => b.matchScore - a.matchScore).slice(0, limit);
+  }
+
+  function renderBook() {
+    const searchField = $("#bookSearch");
+    if (!searchField) return;
+    if (document.activeElement !== searchField) searchField.value = state.bookSearch || "";
+    const items = bookItems();
+    const query = normalizeBookText(state.bookSearch);
+    const filter = state.bookFilter || "all";
+    const filtered = items.filter((item) => {
+      const filterMatch = filter === "all" || (filter === "principle" && item.type === "principle") || (filter === "chapter" && item.type === "chapter") || (filter === "part" && item.type === "part");
+      if (!filterMatch) return false;
+      if (!query) return true;
+      return normalizeBookText(`${item.title} ${item.summary} ${(item.tags || []).join(" ")} ${item.source || ""}`).includes(query);
+    });
+    const ordered = query ? filtered : filtered.filter((item) => item.type === "chapter").concat(filtered.filter((item) => item.type !== "chapter"));
+    const visible = ordered.slice(0, 48);
+    $("#bookPageCount").textContent = String(BOOK.meta.sourcePageCount || 350);
+    $("#bookPartCount").textContent = String(BOOK.meta.sourceParts || 8);
+    $("#bookRuleCount").textContent = String((BOOK.rules || []).length);
+    $("#bookChapterCount").textContent = String((BOOK.sections || []).reduce((total, section) => total + 1 + (section.chapters || []).length, 0));
+    $("#bookEditionNote").textContent = BOOK.meta.editionNote || "مرجع تعليمي مرفوع داخل المختبر.";
+    $$("#bookFilters button").forEach((button) => button.classList.toggle("active", button.dataset.bookFilter === filter));
+    $("#bookResultsTitle").textContent = query ? `نتائج البحث عن «${state.bookSearch}»` : filter === "principle" ? "القواعد المرتبطة بالممارسة" : filter === "part" ? "الأجزاء المرفوعة" : "خريطة الأبواب والفصول";
+    $("#bookResultsCount").textContent = `${filtered.length} نتيجة`;
+    const results = $("#bookResults");
+    if (!visible.length) {
+      results.innerHTML = '<div class="book-empty">لا توجد نتيجة مطابقة. جرّب كلمة أوسع مثل «الدعوى» أو «الحكم».</div>';
+    } else {
+      results.innerHTML = visible.map((item) => `<article class="book-result ${state.bookSelected === item.id ? "selected" : ""}" data-book-id="${escapeHtml(item.id)}"><div class="book-result-topline"><strong>${escapeHtml(item.label)}</strong><span class="book-result-page">ص ${escapeHtml(item.page)}</span></div><h4>${escapeHtml(item.title)}</h4><p>${escapeHtml(item.summary)}</p><div class="book-result-tags">${(item.tags || []).slice(0, 4).map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}</div></article>`).join("");
+    }
+    if (!state.bookSelected && visible[0]) state.bookSelected = visible[0].id;
+    renderBookApplication(items.find((item) => item.id === state.bookSelected) || visible[0]);
+    const moduleLinks = [
+      ["simulator", "◎", "المحاكاة الإجرائية", "قرار يختبر القاعدة"],
+      ["court", "⚖", "المحكمة الافتراضية", "مرافعة وتعليل"],
+      ["ai", "✦", "المساعد الذكي", "صياغة ومراجعة"],
+      ["judgment", "◈", "تحليل الأحكام", "من الوقائع إلى التعليق"],
+      ["quiz", "?", "بنك الأسئلة", "قياس الفهم"],
+      ["map", "⌘", "الخريطة الإجرائية", "ترتيب المراحل"],
+    ];
+    $("#bookModuleLinks").innerHTML = moduleLinks.map(([view, icon, title, detail]) => `<button class="book-module-link" data-view="${view}"><span>${icon}</span><div><strong>${title}</strong><small>${detail}</small></div></button>`).join("") + '<button class="book-module-link" data-book-action="quiz"><span>↗</span><div><strong>جلسة من الكتاب</strong><small>ابدأ اختباراً موضوعياً</small></div></button>';
+  }
+
+  function renderBookApplication(item) {
+    const title = $("#bookApplicationTitle");
+    const text = $("#bookApplicationText");
+    const links = $("#bookApplicationLinks");
+    if (!title || !text || !links || !item) return;
+    title.textContent = item.title;
+    text.textContent = item.type === "principle" ? `${item.principle || item.summary} المرجع: ${item.source || "موضع الكتاب"}.` : `${item.summary} افتح إحدى الأدوات لتطبيق هذا المحور في قرار أو مذكرة أو جلسة.`;
+    const views = item.type === "principle" ? (item.modules || []) : ["simulator", "quiz", "book"];
+    const labels = { simulator: "اختبر في المحاكاة", court: "افتح المحكمة", ai: "اكتب مذكرة", judgment: "حلّل حكماً", quiz: "اختبر فهمك", map: "شاهد الخريطة", book: "تابع الفهرس" };
+    links.innerHTML = [...new Set(views)].filter((view) => labels[view]).map((view) => `<button data-view="${view}">${labels[view]}</button>`).join("");
+  }
+
+  function selectBookItem(id) {
+    state.bookSelected = id;
+    saveState();
+    renderBook();
+  }
+
+  function startBookQuiz() {
+    state.quizQueue = Array.from({ length: (BOOK.quiz || []).length }, (_, index) => bookQuizStartIndex + index);
+    state.quizIndex = 0;
+    state.quizSelection = null;
+    saveState();
+    setView("quiz");
+    showToast("بدأت جلسة أسئلة مبنية على أبواب الكتاب.");
+  }
+
   function localAI(type, prompt, draft) {
     const text = `${prompt || ""} ${draft || ""}`.toLowerCase();
     const points = [];
     const sources = [];
+    const bookMatches = findBookMatches(`${prompt || ""} ${draft || ""}`, 2);
     let score = 66;
     if (text.includes("تبليغ") || type === "notice") {
       sources.push("المادة 49", "كتاب المرافعات ص 155–170");
@@ -698,6 +825,11 @@
       points.push({ tone: "ok", title: "تفصيل جيد", text: "المسودة تتضمن مادة كافية للتحليل الأولي. اطلب من الأستاذ مراجعة الأسماء والوقائع الواقعية قبل اعتمادها في التدريب." });
     } else {
       points.push({ tone: "fix", title: "مطلوب من الطالب", text: "أضف واقعة محددة وطلباً نهائياً واضحاً حتى يستطيع المساعد اختبار الصلة بين الوقائع والإجراء." });
+    }
+    if (bookMatches.length) {
+      sources.unshift(...bookMatches.map((rule) => `${rule.title} · ${rule.source}`));
+      points.unshift({ tone: "book", title: `صلة مباشرة بالكتاب: ${bookMatches[0].title}`, text: `${bookMatches[0].principle} راجع ${bookMatches[0].source} ثم اربط القاعدة بالواقعة التي كتبتها.` });
+      score += 4;
     }
     return { score: Math.min(98, score), headline: score > 78 ? "بنية واعدة تحتاج صقلاً" : "مسودة أولية تحتاج استكمالاً", points, sources };
   }
@@ -782,12 +914,13 @@
     else if (lower.includes("تعويض") || lower.includes("ضرر")) issue = "ما شروط قيام المسؤولية واستحقاق التعويض، وهل أقامت المحكمة صلة كافية بين الفعل والضرر والنتيجة؟";
     else issue = "ما القاعدة القانونية التي تحكم النزاع، وكيف انتقلت المحكمة من الوقائع والادعاءات إلى الحل الوارد في المنطوق؟";
 
+    const bookMatches = findBookMatches(`${title} ${issue} ${legalBases.join(" ")} ${subjectLines.join(" ")}`, 4);
     const summaryParts = uniqueJudgment([...facts.slice(0, 2), ...procedure.slice(0, 2), ...claims.slice(0, 1)]);
     const summary = summaryParts.length ? summaryParts.join(" ") : "يحتاج الحكم إلى استخراج يدوي للوقائع والإجراءات قبل تحرير المقدمة.";
     const intro = `يتناول ${title} نزاعاً مدنياً يدور حول: ${issue} وتتلخص وقائعه وإجراءاته في: ${summary} ثم انتهت المحكمة إلى الحل الآتي: ${operative[0] || "يجب نقل المنطوق بدقة من الحكم الأصلي."}`;
     const objective = legalBases.length
-      ? `تبدأ القراءة الموضوعية من ${legalBases.slice(0, 3).join("، ")}، ثم تفحص كيفية تفسير المحكمة للنص وربطه بوقائع الحكم. يجب مقارنة هذا التطبيق بالاجتهاد القضائي والاتجاه الفقهي ذي الصلة، لا الاكتفاء بترديد النتيجة.`
-      : "لم يظهر في النص المقدم رقم مادة أو فصل واضح؛ أضف النصوص التي بنت عليها المحكمة حكمها، ثم اختبر وضوحها وتفسيرها وصلتها بالوقائع.";
+      ? `تبدأ القراءة الموضوعية من ${legalBases.slice(0, 3).join("، ")}، ثم تفحص كيفية تفسير المحكمة للنص وربطه بوقائع الحكم. يجب مقارنة هذا التطبيق بالاجتهاد القضائي والاتجاه الفقهي ذي الصلة، لا الاكتفاء بترديد النتيجة. صلة الكتاب المقترحة: ${bookMatches.slice(0, 2).map((rule) => `${rule.title} (${rule.source})`).join("، ") || "حدّد موضعاً تعليمياً من موسوعة الكتاب"}.`
+      : "لم يظهر في النص المقدم رقم مادة أو فصل واضح؛ أضف النصوص التي بنت عليها المحكمة حكمها، ثم اختبر وضوحها وتفسيرها وصلتها بالوقائع. استخدم موسوعة الكتاب للعثور على الباب الإجرائي الأقرب قبل صياغة التعليق.";
     const personal = operative.length
       ? `التقييم الأولي: يظهر أن مركز التحليل يجب أن ينصب على تسبيب المحكمة قبل منطوقها، وعلى سؤال ما إذا كانت النتيجة قد التزمت بالقاعدة ووزعت عبء الإثبات توزيعاً سليماً. ${operative[0]}`
       : "التقييم الشخصي مؤجل إلى حين إدخال منطوق الحكم وحيثياته كاملة؛ لا يصح تقييم حكم دون معرفة الطريق الذي سلكته المحكمة.";
@@ -807,7 +940,7 @@
       { label: "النصوص القانونية", done: legalBases.length > 0 },
     ];
     const score = Math.round((checks.filter((item) => item.done).length / checks.length) * 100);
-    return { title, score, wordCount: text.split(/\s+/).filter(Boolean).length, dates, courts, caseNumber, facts, parties, claims, procedure, operative, legalBases, subjectLines, issue, intro, objective, personal, conclusion, missing, checks, reference: "التعليق على قرار: منهجية وتطبيق، مجلة المعرفة، العدد 14، مارس 2024، ص 421–428" };
+    return { title, score, wordCount: text.split(/\s+/).filter(Boolean).length, dates, courts, caseNumber, facts, parties, claims, procedure, operative, legalBases, subjectLines, issue, intro, objective, personal, conclusion, missing, checks, bookMatches, reference: "التعليق على قرار: منهجية وتطبيق، مجلة المعرفة، العدد 14، مارس 2024، ص 421–428" };
   }
 
   function renderJudgment() {
@@ -923,7 +1056,9 @@
     const card = $("#noticeResult").parentElement;
     card.classList.toggle("valid", result.valid);
     card.classList.toggle("invalid", !result.valid);
-    $("#noticeResult").innerHTML = `<div class="notice-result"><div class="notice-result-head"><div class="notice-icon">${result.valid ? "✓" : "!"}</div><div><h3>محضر تبليغ ${result.valid ? "مستوفٍ مبدئياً" : "يحتاج مراجعة"}</h3><small>${escapeHtml(result.id)} · ${escapeHtml(result.date)}</small></div><span class="result-badge ${result.valid ? "valid" : "invalid"}">${result.valid ? "منتج للأثر" : "قابل للاعتراض"}</span></div><div class="notice-reason">${result.reasons.map((reason) => `<div>• ${escapeHtml(reason)}</div>`).join("")}</div><div class="notice-meta"><div><span>المبلّغ إليه</span><strong>${escapeHtml(noticeTargetLabel(result.target))}</strong></div><div><span>الوسيلة</span><strong>${escapeHtml(noticeMethodLabel(result.method))}</strong></div><div><span>إثبات الهوية</span><strong>${result.identity === "verified" ? "متحقق" : result.identity === "delegate" ? "وكيل / موظف" : "غير كافٍ"}</strong></div><div><span>أثر المحضر</span><strong>${result.valid ? "بدء فحص الميعاد" : "لا يعتمد قبل الإصلاح"}</strong></div></div><div class="notice-result-foot">المحاكاة لا تحسم صحة إعلان واقعي؛ راجع المادة 49 وبيانات الواقعة مع الأستاذ.</div></div>`;
+    const bookMatch = findBookMatches("الإعلان القضائي وتمكين الخصم من العلم والدفاع", 1)[0];
+    const bookReference = bookMatch ? ` · ${bookMatch.title} (${bookMatch.source})` : "";
+    $("#noticeResult").innerHTML = `<div class="notice-result"><div class="notice-result-head"><div class="notice-icon">${result.valid ? "✓" : "!"}</div><div><h3>محضر تبليغ ${result.valid ? "مستوفٍ مبدئياً" : "يحتاج مراجعة"}</h3><small>${escapeHtml(result.id)} · ${escapeHtml(result.date)}</small></div><span class="result-badge ${result.valid ? "valid" : "invalid"}">${result.valid ? "منتج للأثر" : "قابل للاعتراض"}</span></div><div class="notice-reason">${result.reasons.map((reason) => `<div>• ${escapeHtml(reason)}</div>`).join("")}</div><div class="notice-meta"><div><span>المبلّغ إليه</span><strong>${escapeHtml(noticeTargetLabel(result.target))}</strong></div><div><span>الوسيلة</span><strong>${escapeHtml(noticeMethodLabel(result.method))}</strong></div><div><span>إثبات الهوية</span><strong>${result.identity === "verified" ? "متحقق" : result.identity === "delegate" ? "وكيل / موظف" : "غير كافٍ"}</strong></div><div><span>أثر المحضر</span><strong>${result.valid ? "بدء فحص الميعاد" : "لا يعتمد قبل الإصلاح"}</strong></div></div><div class="notice-result-foot">المحاكاة لا تحسم صحة إعلان واقعي؛ راجع المادة 49 وبيانات الواقعة مع الأستاذ${escapeHtml(bookReference)}.</div></div>`;
   }
 
   const executionChoices = {
@@ -936,7 +1071,9 @@
     $$("#executionOptions button").forEach((button) => button.classList.toggle("active", button.dataset.execution === state.executionChoice));
     if (!state.executionChoice) return;
     const choice = executionChoices[state.executionChoice];
-    $("#executionFeedback").innerHTML = `<div class="execution-path"><h4>تسلسل ${escapeHtml(choice.title)}</h4><div class="path-steps">${choice.steps.map((step) => `<span>${escapeHtml(step)}</span>`).join("")}</div><div class="execution-note"><strong>§</strong><span>${escapeHtml(choice.note)}</span></div></div>`;
+    const bookMatch = findBookMatches(`${choice.title} ${choice.description} ${choice.note}`, 1)[0];
+    const bookNote = bookMatch ? `مرجع الوجيز: ${bookMatch.title} · ${bookMatch.source}.` : "";
+    $("#executionFeedback").innerHTML = `<div class="execution-path"><h4>تسلسل ${escapeHtml(choice.title)}</h4><div class="path-steps">${choice.steps.map((step) => `<span>${escapeHtml(step)}</span>`).join("")}</div><div class="execution-note"><strong>§</strong><span>${escapeHtml(choice.note)} ${escapeHtml(bookNote)}</span></div></div>`;
     const timeline = $("#executionTimeline");
     timeline.innerHTML = `<div class="timeline-item completed"><span>✓</span><div><strong>إيداع طلب التنفيذ</strong><small>المادة 206 · تحت إشراف قاضي التنفيذ</small></div></div><div class="timeline-item completed"><span>✓</span><div><strong>إعلان السند التنفيذي</strong><small>انقضاء مهلة الوفاء الطوعي</small></div></div><div class="timeline-item completed"><span>✓</span><div><strong>اختيار ${escapeHtml(choice.title)}</strong><small>تم إنشاء مسار إجرائي افتراضي</small></div></div><div class="timeline-item pending"><span>04</span><div><strong>${escapeHtml(choice.steps[1])}</strong><small>الخطوة التالية في المحاكاة</small></div></div><div class="timeline-item"><span>05</span><div><strong>التحصيل والتوزيع</strong><small>يفتح بعد استكمال التسلسل</small></div></div>`;
   }
@@ -1004,6 +1141,10 @@
         setView(viewTrigger.dataset.view);
         return;
       }
+      const bookResult = event.target.closest("[data-book-id]");
+      if (bookResult) { selectBookItem(bookResult.dataset.bookId); return; }
+      const bookAction = event.target.closest("[data-book-action]");
+      if (bookAction?.dataset.bookAction === "quiz") { startBookQuiz(); return; }
       const scenarioTrigger = event.target.closest("[data-scenario]");
       if (scenarioTrigger && scenarioTrigger.closest("#scenarioSwitcher")) { switchScenario(scenarioTrigger.dataset.scenario); return; }
       const decision = event.target.closest("[data-decision-index]");
@@ -1036,6 +1177,8 @@
     $("#judgmentTitle").addEventListener("input", (event) => { state.judgmentTitle = event.target.value; saveState(); });
     $("#judgmentText").addEventListener("input", (event) => { state.judgmentText = event.target.value; $("#judgmentCharCount").textContent = `${wordCount(event.target.value)} كلمة`; saveState(); });
     $("#analyzeJudgment").addEventListener("click", analyzeJudgment);
+    $("#bookSearch").addEventListener("input", (event) => { state.bookSearch = event.target.value; saveState(); renderBook(); });
+    $("#bookFilters").addEventListener("click", (event) => { const filter = event.target.closest("button[data-book-filter]"); if (!filter) return; state.bookFilter = filter.dataset.bookFilter; saveState(); renderBook(); });
     $("#generateNotice").addEventListener("click", buildNotice);
     $("#clearExecution").addEventListener("click", () => { state.executionChoice = null; saveState(); renderExecution(); showToast("تمت إعادة غرفة التنفيذ إلى نقطة الاختيار."); });
     $("#sourceFilter").addEventListener("click", (event) => { const filterButton = event.target.closest("button[data-filter]"); if (!filterButton) return; $$("#sourceFilter button").forEach((button) => button.classList.toggle("active", button === filterButton)); renderSources(); });

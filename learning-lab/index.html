@@ -9,8 +9,9 @@
       content="منصة تعليمية تفاعلية للمرافعات والتنفيذ الجبري، منجزة من طرف الدكتور ياسين شامي، كلية القانون، جامعة الإمارات العربية المتحدة."
     />
     <title>مختبر ياسين شامي | المرافعات والتنفيذ الجبري</title>
-    <link rel="stylesheet" href="styles.css?v=20261008-judgment" />
-    <script defer src="app.js?v=20261008-judgment"></script>
+    <link rel="stylesheet" href="styles.css?v=20261008-book" />
+    <script defer src="book-data.js?v=20261008-book"></script>
+    <script defer src="app.js?v=20261008-book"></script>
   </head>
   <body>
     <div class="app-shell">
@@ -51,6 +52,11 @@
             <span class="nav-icon">◈</span>
             <span>تحليل الأحكام المدنية</span>
             <span class="nav-badge new">جديد</span>
+          </button>
+          <button class="nav-item" data-view="book">
+            <span class="nav-icon">▦</span>
+            <span>موسوعة الكتاب</span>
+            <span class="nav-badge book-count">350 ص</span>
           </button>
           <button class="nav-item" data-view="quiz">
             <span class="nav-icon">?</span>
@@ -246,7 +252,7 @@
                 <div class="transcript" id="courtTranscript"></div>
                 <div class="court-controls"><label for="courtAction">اختر مداخلتك في الجلسة</label><div class="control-row"><select id="courtAction"><option value="claim">أقدم طلب قيد الحجز وتقرير الغير</option><option value="defense">أدفع ببطلان التبليغ وعدم العلم</option><option value="objection">أطلب وقف التنفيذ مؤقتاً</option><option value="officer">أعرض محضر الحجز والتبليغ</option><option value="judge">أطلب من القاضي تحديد الأجل التالي</option></select><button class="primary-button" id="courtSpeak">تحدث في الجلسة <span>↗</span></button></div><div class="court-tip">سيحلل القاضي الافتراضي مداخلتك ويستند إلى المادة الأقرب في سجل الجلسة.</div></div>
               </article>
-              <aside class="court-aside"><div class="roles-card"><div class="card-heading"><div><p class="eyebrow">التحكم في الأدوار</p><h3>من يمثّلك؟</h3></div><span class="role-count">5 أدوار</span></div><div class="role-picker" id="rolePicker"><button class="role-choice active" data-role="student"><span class="role-avatar student">ط</span><div><strong>الطالب / المحامي</strong><small>تقديم الطلبات والدفوع</small></div><i>✓</i></button><button class="role-choice" data-role="judge"><span class="role-avatar judge">ق</span><div><strong>القاضي الافتراضي</strong><small>إدارة الجلسة والتعليل</small></div><i>✓</i></button><button class="role-choice" data-role="opponent"><span class="role-avatar opponent">خ</span><div><strong>الخصم الافتراضي</strong><small>إثارة الدفوع والمنازعة</small></div><i>✓</i></button><button class="role-choice" data-role="officer"><span class="role-avatar officer">م</span><div><strong>المُنفّذ الافتراضي</strong><small>تنفيذ الإجراءات المادية</small></div><i>✓</i></button><button class="role-choice" data-role="notice"><span class="role-avatar notice">ت</span><div><strong>موظف التبليغ</strong><small>إنشاء أثر التبليغ</small></div><i>✓</i></button></div></div><div class="court-rule-card"><span class="rule-number">01</span><div><p class="eyebrow">قاعدة الجلسة</p><strong>الاختصاص بقاضي التنفيذ في منازعات التنفيذ الوقتية.</strong><small>قانون الإجراءات المدنية · المادة 239</small></div></div></aside>
+              <aside class="court-aside"><div class="roles-card"><div class="card-heading"><div><p class="eyebrow">التحكم في الأدوار</p><h3>من يمثّلك؟</h3></div><span class="role-count">5 أدوار</span></div><div class="role-picker" id="rolePicker"><button class="role-choice active" data-role="student"><span class="role-avatar student">ط</span><div><strong>الطالب / المحامي</strong><small>تقديم الطلبات والدفوع</small></div><i>✓</i></button><button class="role-choice" data-role="judge"><span class="role-avatar judge">ق</span><div><strong>القاضي الافتراضي</strong><small>إدارة الجلسة والتعليل</small></div><i>✓</i></button><button class="role-choice" data-role="opponent"><span class="role-avatar opponent">خ</span><div><strong>الخصم الافتراضي</strong><small>إثارة الدفوع والمنازعة</small></div><i>✓</i></button><button class="role-choice" data-role="officer"><span class="role-avatar officer">م</span><div><strong>المُنفّذ الافتراضي</strong><small>تنفيذ الإجراءات المادية</small></div><i>✓</i></button><button class="role-choice" data-role="notice"><span class="role-avatar notice">ت</span><div><strong>موظف التبليغ</strong><small>إنشاء أثر التبليغ</small></div><i>✓</i></button></div></div><div class="court-rule-card"><span class="rule-number">01</span><div><p class="eyebrow">قاعدة الجلسة</p><strong id="courtRuleTitle">الاختصاص بقاضي التنفيذ في منازعات التنفيذ الوقتية.</strong><small id="courtRuleSource">قانون الإجراءات المدنية · المادة 239</small></div></div></aside>
             </div>
           </section>
 
@@ -279,6 +285,25 @@
               </article>
             </div>
             <div class="judgment-method-note"><span>✦</span><div><strong>مرجع تربوي ظاهر داخل المنصة</strong><p>بُني هذا المسار على نموذج «التعليق على قرار: منهجية وتطبيق»؛ مع التنبيه إلى القراءة المتكررة، الموضوعية، تتبع الاجتهاد والفقه، والربط الدائم بين القاعدة ووقائع الحكم. الأداة تدريبية ويشرف الأستاذ على المخرج النهائي.</p></div><a href="https://www.josooor.com/pdfs/fourteenth/first/33.pdf" target="_blank" rel="noopener">فتح المرجع ↗</a></div>
+          </section>
+
+          <section class="view" id="view-book" data-title="موسوعة الكتاب">
+            <div class="page-intro book-intro">
+              <div><p class="eyebrow">اقرأ · ابحث · طبّق</p><h2>موسوعة الكتاب الإجرائي</h2><p>فهرس تعليمي تفاعلي للمحتوى المرفوع من كتاب «الوجيز في قانون الإجراءات المدنية»، يحوّل كل باب إلى مصدر قابل للاستدعاء داخل المحاكاة والصياغة والمحكمة والاختبارات.</p></div>
+              <div class="book-cover-mini"><span>الوجيز</span><strong>في قانون<br />الإجراءات المدنية</strong><small>أ.د. أحمد خليل · 350 صفحة</small></div>
+            </div>
+            <div class="book-stat-grid">
+              <article><span class="book-stat-icon">▤</span><div><strong id="bookPageCount">350</strong><small>صفحة مفهرسة</small></div></article>
+              <article><span class="book-stat-icon">◫</span><div><strong id="bookPartCount">8</strong><small>أجزاء مرفوعة</small></div></article>
+              <article><span class="book-stat-icon">§</span><div><strong id="bookRuleCount">0</strong><small>قاعدة تدريبية</small></div></article>
+              <article><span class="book-stat-icon">↗</span><div><strong id="bookChapterCount">0</strong><small>موضوعاً وفصلاً</small></div></article>
+            </div>
+            <div class="book-search-card">
+              <div class="book-search-copy"><p class="eyebrow">محرك المعرفة</p><h3>ابحث داخل خريطة الكتاب</h3><p>جرّب: «الإعلان»، «البطلان»، «الاستئناف»، «الاختصاص المحلي»، أو «الطلبات العارضة».</p></div>
+              <div class="book-search-controls"><label class="book-search-input"><span>⌕</span><input id="bookSearch" type="search" placeholder="اكتب كلمة أو مادة أو موضوعاً..." /></label><div class="book-filters" id="bookFilters"><button class="active" data-book-filter="all">الكل</button><button data-book-filter="principle">قواعد</button><button data-book-filter="chapter">الأبواب والفصول</button><button data-book-filter="part">الأجزاء</button></div></div>
+            </div>
+            <div class="book-layout"><aside class="book-side-card"><div class="card-heading"><div><p class="eyebrow">مسارات التطبيق</p><h3>أين يعمل الكتاب؟</h3></div><span class="book-side-mark">✦</span></div><div id="bookModuleLinks" class="book-module-links"></div><div class="book-source-note"><strong>المصدر</strong><p id="bookEditionNote">مرجع تعليمي مرفوع داخل المختبر.</p></div></aside><article class="book-results-card"><div class="book-results-head"><div><p class="eyebrow">نتائج الفهرسة</p><h3 id="bookResultsTitle">خريطة الأبواب والفصول</h3></div><span class="status-pill" id="bookResultsCount">0 نتيجة</span></div><div id="bookResults" class="book-results"></div></article></div>
+            <div class="book-application-card"><div><p class="eyebrow">قاعدة مرتبطة بالممارسة</p><h3 id="bookApplicationTitle">اختر نتيجة لتظهر طريقة توظيفها</h3><p id="bookApplicationText">ستظهر هنا روابط القاعدة بالمحاكاة، بنك الأسئلة، المساعد الذكي، المحكمة الافتراضية، وتحليل الأحكام.</p></div><div id="bookApplicationLinks" class="book-application-links"></div></div>
           </section>
 
           <section class="view" id="view-quiz" data-title="بنك الأسئلة التكيّفي">
