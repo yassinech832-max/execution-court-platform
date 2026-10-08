@@ -11,6 +11,11 @@
   const today = new Date().toISOString().slice(0, 10);
   const BOOK = window.PROCEDURAL_BOOK || { meta: {}, parts: [], sections: [], rules: [], quiz: [] };
   const CORPUS = window.PROCEDURAL_BOOK_CORPUS || { pages: [] };
+  const ENFORCEMENT_BOOK = window.ENFORCEMENT_BOOK || { meta: {}, parts: [], sections: [], rules: [], quiz: [] };
+  const ENFORCEMENT_CORPUS = (() => {
+    const parts = window.ENFORCEMENT_BOOK_CORPUS_PARTS || [];
+    return { source: parts[0]?.source || "", pages: parts.flatMap((part) => part.pages || []) };
+  })();
 
   const scenarios = {
     claim: {
@@ -284,7 +289,9 @@
 
   const bookQuizStartIndex = quizQuestions.length;
   quizQuestions.push(...(BOOK.quiz || []));
-  const initialQuizQueue = [0, 1, 2, 3, 4, ...Array.from({ length: Math.min(5, (BOOK.quiz || []).length) }, (_, index) => bookQuizStartIndex + index)];
+  const enforcementQuizStartIndex = quizQuestions.length;
+  quizQuestions.push(...(ENFORCEMENT_BOOK.quiz || []));
+  const initialQuizQueue = [0, 1, 2, 3, 4, ...Array.from({ length: Math.min(5, (BOOK.quiz || []).length) }, (_, index) => bookQuizStartIndex + index), ...Array.from({ length: Math.min(5, (ENFORCEMENT_BOOK.quiz || []).length) }, (_, index) => enforcementQuizStartIndex + index)];
 
   const defaultState = {
     view: "dashboard",
@@ -308,6 +315,9 @@
     bookFilter: "all",
     bookSearch: "",
     bookSelected: "",
+    enforcementFilter: "all",
+    enforcementSearch: "",
+    enforcementSelected: "",
     quizQueue: initialQuizQueue,
     quizIndex: 0,
     quizSelection: null,
@@ -328,7 +338,9 @@
       if (!Array.isArray(merged.quizHistory)) merged.quizHistory = [];
       if (!Number.isInteger(merged.quizIndex)) merged.quizIndex = 0;
       if (!bookItems().some((item) => item.id === merged.bookSelected)) merged.bookSelected = BOOK.rules[0]?.id || "";
+      if (!enforcementBookItems().some((item) => item.id === merged.enforcementSelected)) merged.enforcementSelected = enforcementBookItems().find((item) => item.type === "principle")?.id || "";
       if (!BOOK.sections.length && merged.bookFilter !== "all") merged.bookFilter = "all";
+      if (!ENFORCEMENT_BOOK.sections.length && merged.enforcementFilter !== "all") merged.enforcementFilter = "all";
       if (typeof merged.judgmentTitle !== "string") merged.judgmentTitle = "";
       if (typeof merged.judgmentText !== "string") merged.judgmentText = "";
       if (typeof merged.judgmentFileName !== "string") merged.judgmentFileName = "";
@@ -390,6 +402,7 @@
     if (view === "ai") renderAI();
     if (view === "judgment") renderJudgment();
     if (view === "book") renderBook();
+    if (view === "enforcement-book") renderEnforcementBook();
     if (view === "quiz") renderQuiz();
     if (view === "map") renderMap();
     if (view === "notice") renderNotice();
@@ -705,6 +718,15 @@
       .trim();
   }
 
+  function bookQueryMatches(item, query) {
+    if (!query) return true;
+    const haystack = normalizeBookText(`${item.title} ${item.summary} ${item.text || ""} ${(item.tags || []).join(" ")} ${item.source || ""}`);
+    if (haystack.includes(query)) return true;
+    const terms = query.split(/\s+/).filter((term) => term.length > 2);
+    const hits = terms.filter((term) => haystack.includes(term) || (term.length > 4 && haystack.includes(term.slice(0, -2))));
+    return hits.length >= Math.max(1, Math.ceil(terms.length * 0.6));
+  }
+
   function bookChapterItems() {
     return (BOOK.sections || []).flatMap((section) => [
       { type: "chapter", id: `section-${section.id}`, title: section.title, label: section.number, page: section.page, summary: section.summary, tags: ["باب", section.title], parent: section.title, tone: section.tone },
@@ -735,7 +757,10 @@
       const excerpt = page.text.replace(/\s+/g, " ").slice(0, 420);
       return { type: "text", id: `text-${page.id}`, title: `مقطع المصدر في الصفحة ${page.printedPage}`, page: page.printedPage, source: `الوجيز، ص ${page.printedPage}`, principle: excerpt, summary: excerpt, text: page.text, tags: ["نص المصدر", `الجزء ${page.part}`], matchScore: score };
     }).filter((page) => page.matchScore > 0);
-    return [...ruleMatches, ...pageMatches].sort((a, b) => (b.matchScore - a.matchScore) || (a.type === "principle" ? -1 : 1)).slice(0, limit);
+    const civilMatches = [...ruleMatches, ...pageMatches];
+    const executionContext = /تنفيذ|حجز|سند تنفيذي|بيع|توزيع|إشكال|قاضي التنفيذ|المدين|الدائن|الغير|التقرير بما في الذمة|رسو المزاد/u.test(query);
+    const enforcementMatches = executionContext ? findEnforcementMatches(text, limit) : [];
+    return [...civilMatches, ...enforcementMatches].sort((a, b) => (b.matchScore - a.matchScore) || (a.type === "principle" ? -1 : 1)).slice(0, limit);
   }
 
   function renderBook() {
@@ -749,7 +774,7 @@
       const filterMatch = filter === "all" ? (query || item.type !== "text") : (filter === "principle" && item.type === "principle") || (filter === "chapter" && item.type === "chapter") || (filter === "part" && item.type === "part") || (filter === "text" && item.type === "text");
       if (!filterMatch) return false;
       if (!query) return true;
-      return normalizeBookText(`${item.title} ${item.summary} ${item.text || ""} ${(item.tags || []).join(" ")} ${item.source || ""}`).includes(query);
+      return bookQueryMatches(item, query);
     });
     const order = { chapter: 0, principle: 1, part: 2, text: 3 };
     const ordered = [...filtered].sort((a, b) => (query ? 0 : (order[a.type] || 9) - (order[b.type] || 9)) || (a.page || 0) - (b.page || 0));
@@ -819,6 +844,123 @@
     saveState();
     setView("quiz");
     showToast("بدأت جلسة أسئلة مبنية على أبواب الكتاب.");
+  }
+
+  function enforcementChapterItems() {
+    return (ENFORCEMENT_BOOK.sections || []).flatMap((section) => [
+      { type: "chapter", id: `enforcement-section-${section.id}`, title: section.title, label: section.number, page: section.page, summary: section.summary, tags: ["باب", section.title], parent: section.title, tone: section.tone },
+      ...(section.chapters || []).map((chapter) => ({ type: "chapter", id: `enforcement-${section.id}:${chapter.id}`, title: chapter.title, label: section.number, page: chapter.page, summary: chapter.summary, tags: [section.title, "فصل"], parent: section.title, tone: section.tone })),
+    ]);
+  }
+
+  function enforcementBookItems() {
+    const parts = (ENFORCEMENT_BOOK.parts || []).map((part) => ({ type: "part", id: `enforcement-part-${part.id}`, title: `الجزء ${part.id}: ${part.title}`, label: `ص ${part.pages}`, page: Number(part.pages.split("-")[0]), summary: `موضوعات هذا الجزء: ${part.themes.join("، ")}.`, tags: part.themes, parent: "الأجزاء المرفوعة", tone: "teal" }));
+    const principles = (ENFORCEMENT_BOOK.rules || []).map((rule) => ({ type: "principle", id: `enforcement-rule-${rule.id}`, ruleId: rule.id, title: rule.title, label: rule.area, page: Number((rule.source.match(/ص\s*(\d+)/) || ["", "0"])[1]), summary: rule.principle, principle: rule.principle, tags: rule.tags, source: rule.source, modules: rule.modules, parent: rule.area, tone: "violet" }));
+    const pages = (ENFORCEMENT_CORPUS.pages || []).map((page) => ({ type: "text", id: `enforcement-text-${page.id}`, title: `مقطع المصدر في الصفحة ${page.printedPage}`, label: `الجزء ${page.part}`, page: page.printedPage, summary: page.text.replace(/\s+/g, " ").slice(0, 420), text: page.text, tags: ["نص المصدر", `الجزء ${page.part}`], source: `الوجيز في قانون التنفيذ الجبري، ص ${page.printedPage}`, parent: "النص الكامل", tone: "sand" }));
+    return [...enforcementChapterItems(), ...principles, ...parts, ...pages];
+  }
+
+  function findEnforcementMatches(text, limit = 3) {
+    const query = normalizeBookText(text);
+    if (!query || limit < 1) return [];
+    const stopWords = new Set(["ذلك", "هذه", "هذا", "التي", "الذي", "على", "الى", "إلى", "من", "عن", "في", "مع", "بين", "بعد", "قبل", "حيث", "ليس", "ولا", "كما", "يجب"]);
+    const terms = query.split(/\s+/).filter((term) => term.length > 2 && !stopWords.has(term));
+    const hit = (haystack, term) => haystack.includes(term) || (term.length > 4 && haystack.includes(term.slice(0, -2)));
+    const ruleMatches = (ENFORCEMENT_BOOK.rules || []).map((rule) => {
+      const haystack = normalizeBookText(`${rule.title} ${rule.principle} ${(rule.tags || []).join(" ")} ${rule.area}`);
+      const score = terms.reduce((total, term) => total + (hit(haystack, term) ? 1 : 0), 0) + (haystack.includes(query) ? 2 : 0);
+      return { type: "principle", id: `enforcement-rule-${rule.id}`, title: rule.title, page: Number((rule.source.match(/ص\s*(\d+)/) || ["", "0"])[1]), source: rule.source, principle: rule.principle, summary: rule.principle, tags: rule.tags, modules: rule.modules, matchScore: score, sourceBook: "enforcement" };
+    }).filter((rule) => rule.matchScore > 0);
+    const pageMatches = (ENFORCEMENT_CORPUS.pages || []).map((page) => {
+      if (!page._normalized) page._normalized = normalizeBookText(page.text);
+      const score = terms.reduce((total, term) => total + (hit(page._normalized, term) ? 1 : 0), 0) + (page._normalized.includes(query) ? 2 : 0);
+      const excerpt = page.text.replace(/\s+/g, " ").slice(0, 420);
+      return { type: "text", id: `enforcement-text-${page.id}`, title: `مقطع المصدر في الصفحة ${page.printedPage}`, page: page.printedPage, source: `الوجيز في قانون التنفيذ الجبري، ص ${page.printedPage}`, principle: excerpt, summary: excerpt, text: page.text, tags: ["نص المصدر", `الجزء ${page.part}`], matchScore: score, sourceBook: "enforcement" };
+    }).filter((page) => page.matchScore > 0);
+    return [...ruleMatches, ...pageMatches].sort((a, b) => (b.matchScore - a.matchScore) || (a.type === "principle" ? -1 : 1)).slice(0, limit);
+  }
+
+  function renderEnforcementBook() {
+    const searchField = $("#enforcementSearch");
+    if (!searchField) return;
+    if (document.activeElement !== searchField) searchField.value = state.enforcementSearch || "";
+    const items = enforcementBookItems();
+    const query = normalizeBookText(state.enforcementSearch);
+    const filter = state.enforcementFilter || "all";
+    const filtered = items.filter((item) => {
+      const filterMatch = filter === "all" ? (query || item.type !== "text") : (filter === "principle" && item.type === "principle") || (filter === "chapter" && item.type === "chapter") || (filter === "part" && item.type === "part") || (filter === "text" && item.type === "text");
+      if (!filterMatch) return false;
+      if (!query) return true;
+      return bookQueryMatches(item, query);
+    });
+    const order = { chapter: 0, principle: 1, part: 2, text: 3 };
+    const ordered = [...filtered].sort((a, b) => (query ? 0 : (order[a.type] || 9) - (order[b.type] || 9)) || (a.page || 0) - (b.page || 0));
+    const visible = ordered.slice(0, 48);
+    $("#enforcementPageCount").textContent = String(ENFORCEMENT_BOOK.meta.sourcePageCount || 336);
+    $("#enforcementPartCount").textContent = String(ENFORCEMENT_BOOK.meta.sourceParts || 7);
+    $("#enforcementRuleCount").textContent = String((ENFORCEMENT_BOOK.rules || []).length);
+    $("#enforcementTextPageCount").textContent = String(ENFORCEMENT_BOOK.meta.sourceTextPageCount || ENFORCEMENT_CORPUS.pages.length || 0);
+    $("#enforcementChapterCount").textContent = String((ENFORCEMENT_BOOK.sections || []).reduce((total, section) => total + 1 + (section.chapters || []).length, 0));
+    $("#enforcementEditionNote").textContent = ENFORCEMENT_BOOK.meta.editionNote || "مرجع تعليمي مرفوع داخل المختبر.";
+    $$("#enforcementFilters button").forEach((button) => button.classList.toggle("active", button.dataset.enforcementFilter === filter));
+    $("#enforcementResultsTitle").textContent = query ? `نتائج البحث عن «${state.enforcementSearch}»` : filter === "principle" ? "القواعد التنفيذية المرتبطة بالممارسة" : filter === "part" ? "الأجزاء المرفوعة" : filter === "text" ? "صفحات النص الكامل للتنفيذ" : "أركان التنفيذ وإجراءاته";
+    $("#enforcementResultsCount").textContent = `${filtered.length} نتيجة`;
+    const results = $("#enforcementResults");
+    if (!visible.length) {
+      results.innerHTML = '<div class="book-empty">لا توجد نتيجة مطابقة. جرّب «الحجز» أو «السند التنفيذي» أو «التوزيع».</div>';
+    } else {
+      results.innerHTML = visible.map((item) => `<article class="book-result enforcement-result ${state.enforcementSelected === item.id ? "selected" : ""}" data-enforcement-id="${escapeHtml(item.id)}"><div class="book-result-topline"><strong>${escapeHtml(item.label)}</strong><span class="book-result-page">ص ${escapeHtml(item.page)}</span></div><h4>${escapeHtml(item.title)}</h4><p>${escapeHtml(item.summary)}</p><div class="book-result-tags">${(item.tags || []).slice(0, 4).map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}</div></article>`).join("");
+    }
+    if (!state.enforcementSelected && visible[0]) state.enforcementSelected = visible[0].id;
+    renderEnforcementApplication(items.find((item) => item.id === state.enforcementSelected) || visible[0]);
+    const moduleLinks = [
+      ["execution", "↗", "غرفة التنفيذ", "اختيار الحجز ومساره"],
+      ["simulator", "◎", "المحاكاة الإجرائية", "بوابات السند والمهلة"],
+      ["court", "⚖", "المحكمة الافتراضية", "منازعة وتعليل"],
+      ["ai", "✦", "المساعد الذكي", "طلب تنفيذ واعتراض"],
+      ["notice", "◫", "التبليغ الافتراضي", "إعلان السند"],
+      ["map", "⌘", "الخريطة الإجرائية", "من السند إلى التوزيع"],
+    ];
+    $("#enforcementModuleLinks").innerHTML = moduleLinks.map(([view, icon, title, detail]) => `<button class="book-module-link" data-view="${view}"><span>${icon}</span><div><strong>${title}</strong><small>${detail}</small></div></button>`).join("") + '<button class="book-module-link" data-enforcement-action="quiz"><span>↗</span><div><strong>جلسة أسئلة التنفيذ</strong><small>اختبر أبواب الكتاب</small></div></button>';
+  }
+
+  function renderEnforcementApplication(item) {
+    const title = $("#enforcementApplicationTitle");
+    const text = $("#enforcementApplicationText");
+    const links = $("#enforcementApplicationLinks");
+    const eyebrow = $("#enforcementApplicationEyebrow");
+    const excerpt = $("#enforcementApplicationExcerpt");
+    if (!title || !text || !links || !item) return;
+    title.textContent = item.title;
+    if (item.type === "text") {
+      eyebrow.textContent = "مقطع من النص الكامل للتنفيذ";
+      text.textContent = `مقطع مستخرج من ${item.tags?.find((tag) => tag.startsWith("الجزء")) || "الجزء المرفوع"}، الصفحة ${item.page}. استخدمه للفهم ثم ارجع إلى الأصل عند التحقق.`;
+      excerpt.textContent = item.text || item.summary || "";
+      excerpt.classList.remove("hidden");
+    } else {
+      eyebrow.textContent = "قاعدة مرتبطة بالملف التنفيذي";
+      text.textContent = item.type === "principle" ? `${item.principle || item.summary} المرجع: ${item.source || "موضع الكتاب"}.` : `${item.summary} افتح الأداة المناسبة لاختبار هذه البوابة.`;
+      excerpt.textContent = "";
+      excerpt.classList.add("hidden");
+    }
+    const views = item.type === "principle" ? (item.modules || []) : item.type === "text" ? ["execution", "ai", "court", "enforcement-book"] : ["execution", "simulator", "quiz"];
+    const labels = { execution: "افتح غرفة التنفيذ", simulator: "اختبر في المحاكاة", court: "افتح المحكمة", ai: "اكتب طلباً", notice: "راجع التبليغ", map: "شاهد الخريطة", quiz: "اختبر فهمك", "enforcement-book": "تابع الموسوعة" };
+    links.innerHTML = [...new Set(views)].filter((view) => labels[view]).map((view) => `<button data-view="${view}">${labels[view]}</button>`).join("");
+  }
+
+  function selectEnforcementItem(id) {
+    state.enforcementSelected = id;
+    saveState();
+    renderEnforcementBook();
+  }
+
+  function startEnforcementQuiz() {
+    state.quizQueue = Array.from({ length: (ENFORCEMENT_BOOK.quiz || []).length }, (_, index) => enforcementQuizStartIndex + index);
+    state.quizIndex = 0;
+    state.quizSelection = null;
+    saveState();
+    setView("quiz");
+    showToast("بدأت جلسة أسئلة مبنية على كتاب التنفيذ الجبري.");
   }
 
   function localAI(type, prompt, draft) {
@@ -1175,6 +1317,10 @@
       if (bookResult) { selectBookItem(bookResult.dataset.bookId); return; }
       const bookAction = event.target.closest("[data-book-action]");
       if (bookAction?.dataset.bookAction === "quiz") { startBookQuiz(); return; }
+      const enforcementResult = event.target.closest("[data-enforcement-id]");
+      if (enforcementResult) { selectEnforcementItem(enforcementResult.dataset.enforcementId); return; }
+      const enforcementAction = event.target.closest("[data-enforcement-action]");
+      if (enforcementAction?.dataset.enforcementAction === "quiz") { startEnforcementQuiz(); return; }
       const scenarioTrigger = event.target.closest("[data-scenario]");
       if (scenarioTrigger && scenarioTrigger.closest("#scenarioSwitcher")) { switchScenario(scenarioTrigger.dataset.scenario); return; }
       const decision = event.target.closest("[data-decision-index]");
@@ -1209,6 +1355,8 @@
     $("#analyzeJudgment").addEventListener("click", analyzeJudgment);
     $("#bookSearch").addEventListener("input", (event) => { state.bookSearch = event.target.value; saveState(); renderBook(); });
     $("#bookFilters").addEventListener("click", (event) => { const filter = event.target.closest("button[data-book-filter]"); if (!filter) return; state.bookFilter = filter.dataset.bookFilter; saveState(); renderBook(); });
+    $("#enforcementSearch").addEventListener("input", (event) => { state.enforcementSearch = event.target.value; saveState(); renderEnforcementBook(); });
+    $("#enforcementFilters").addEventListener("click", (event) => { const filter = event.target.closest("button[data-enforcement-filter]"); if (!filter) return; state.enforcementFilter = filter.dataset.enforcementFilter; saveState(); renderEnforcementBook(); });
     $("#generateNotice").addEventListener("click", buildNotice);
     $("#clearExecution").addEventListener("click", () => { state.executionChoice = null; saveState(); renderExecution(); showToast("تمت إعادة غرفة التنفيذ إلى نقطة الاختيار."); });
     $("#sourceFilter").addEventListener("click", (event) => { const filterButton = event.target.closest("button[data-filter]"); if (!filterButton) return; $$("#sourceFilter button").forEach((button) => button.classList.toggle("active", button === filterButton)); renderSources(); });
