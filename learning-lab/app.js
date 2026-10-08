@@ -1333,6 +1333,10 @@
     return true;
   }
 
+  function formatCivilLawRanges(ranges) {
+    return (ranges || []).map((range) => range[0] === range[1] ? `${range[0]}` : `${range[0]}–${range[1]}`).join(" و");
+  }
+
   function formatLawText(text) {
     return escapeHtml(text || "").replace(/\n/g, "<br />");
   }
@@ -1344,7 +1348,7 @@
     const query = normalizeBookText(state.lawSearch);
     const filter = state.lawFilter || "all";
     const filtered = articles.filter((article) => civilLawFilterMatch(article, filter) && (!query || lawArticleScore(article, query) > 0));
-    const visible = filtered.slice(0, 120);
+    const visible = filtered;
     const selected = articles.find((article) => article.id === state.lawSelected);
     if (!selected || !filtered.some((article) => article.id === selected.id)) state.lawSelected = visible[0]?.id || articles[0]?.id || "";
     const current = articles.find((article) => article.id === state.lawSelected) || visible[0] || articles[0];
@@ -1356,16 +1360,40 @@
     $("#civilLawOfficialLink").href = CIVIL_LAW.meta.sourceUrl || "https://uaelegislation.gov.ae/ar/legislations/1602";
     $("#civilLawSearchCount").textContent = query ? `${filtered.length} نتيجة` : `${articles.length} مادة`;
     $(".legal-law-count").textContent = `${articles.length} م`;
-    $$("#civilLawFilters button").forEach((button) => button.classList.toggle("active", button.dataset.lawFilter === filter));
 
-    const sectionButtons = [{ id: "all", title: "كل المواد", detail: `${articles.length} مادة` }, ...(CIVIL_LAW.sections || []).map((section) => ({ id: section.id, title: section.title, detail: `${section.to - section.from + 1} مواد` }))];
+    const fixedFilters = [
+      { id: "all", title: "كل المواد" },
+      { id: "general", title: "الأحكام العامة" },
+      { id: "jurisdiction", title: "الاختصاص" },
+      { id: "filing", title: "رفع الدعوى والقيد" },
+      { id: "notice", title: "الإعلان والمواعيد" },
+    ];
+    const sectionFilters = (CIVIL_LAW.sections || []).map((section) => ({ id: section.id, title: section.title }));
+    $("#civilLawFilters").innerHTML = [...fixedFilters, ...sectionFilters]
+      .filter((item, index, items) => items.findIndex((candidate) => candidate.id === item.id) === index)
+      .map((item) => `<button class="${item.id === filter ? "active" : ""}" data-law-filter="${escapeHtml(item.id)}">${escapeHtml(item.title)}</button>`)
+      .join("");
+
+    const sectionButtons = [{ id: "all", title: "كل المواد", detail: `${articles.length} مادة` }, ...(CIVIL_LAW.sections || []).map((section) => ({ id: section.id, title: section.title, detail: `${section.articleIds?.length || section.to - section.from + 1} مواد` }))];
     $("#civilLawSectionList").innerHTML = sectionButtons.map((section) => `<button class="legal-section-button ${section.id === filter ? "active" : ""}" data-law-section="${escapeHtml(section.id)}"><div><strong>${escapeHtml(section.title)}</strong><small>${escapeHtml(section.detail)}</small></div></button>`).join("");
 
     const results = $("#civilLawResults");
     if (!visible.length) {
-      results.innerHTML = '<div class="legal-empty">لا توجد مادة مطابقة. جرّب رقم المادة أو «الإعلان» أو «الاختصاص» أو «صحيفة الدعوى».</div>';
+      results.innerHTML = '<div class="legal-empty">لا توجد مادة مطابقة. جرّب رقم المادة أو «الاستئناف» أو «النقض» أو «أمر الأداء». وقد تكون المادة ضمن النطاق غير المرفق بعد.</div>';
     } else {
       results.innerHTML = visible.map((article) => `<button class="legal-article-card ${current.id === article.id ? "selected" : ""}" data-law-id="${escapeHtml(article.id)}"><div class="legal-article-card-top"><strong>${escapeHtml(article.label)}</strong><span>${escapeHtml(article.topic)}</span></div><h4>${escapeHtml(article.chapter || article.part)}</h4><p>${escapeHtml(article.text.replace(/\s+/g, " ").slice(0, 280))}</p><div class="legal-article-card-tags">${(article.tags || []).slice(0, 3).map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}</div></button>`).join("");
+    }
+
+    const lawCard = $(".law-source-card");
+    if (lawCard) {
+      const covered = formatCivilLawRanges(CIVIL_LAW.meta.coveredRanges);
+      const missing = formatCivilLawRanges(CIVIL_LAW.meta.missingRanges);
+      const number = lawCard.querySelector(".source-number");
+      const description = lawCard.querySelector("p");
+      const label = lawCard.querySelector("small");
+      if (number) number.textContent = covered;
+      if (description) description.textContent = `سجل تشريعي بحثي يضم ${articles.length} مادة مرفقة حتى الآن، مع فهرس للأبواب والفصول، نص المادة، الكلمات المفتاحية، وروابط التطبيق داخل المختبر.${missing ? ` المواد غير المرفقة: ${missing}.` : ""}`;
+      if (label) label.innerHTML = `المواد ${escapeHtml(covered)} · ${missing ? `بانتظار: ${escapeHtml(missing)} · ` : ""}<button class="inline-source-button" data-law-action="open">افتح سجل المواد</button>`;
     }
 
     const labels = { simulator: "اختبر في المحاكاة", notice: "افتح التبليغ", court: "افتح المحكمة", ai: "اكتب مذكرة", judgment: "حلّل حكماً", quiz: "اختبر المادة", map: "شاهد الخريطة", execution: "افتح التنفيذ" };
