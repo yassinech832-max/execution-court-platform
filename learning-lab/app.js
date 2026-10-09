@@ -1558,7 +1558,8 @@
   function init() {
     bindEvents();
     renderDashboard();
-    setView(state.view || "dashboard");
+    const requestedView = new URLSearchParams(window.location.search).get("view");
+    setView(requestedView === "book" ? "book" : (state.view || "dashboard"));
   }
 
   document.addEventListener("DOMContentLoaded", init);
