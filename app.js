@@ -10,7 +10,10 @@
   const STORAGE_KEY = "yassin-shami-procedural-lab-v3-corpus";
   const today = new Date().toISOString().slice(0, 10);
   const BOOK = window.PROCEDURAL_BOOK || { meta: {}, parts: [], sections: [], rules: [], quiz: [] };
-  const CORPUS = window.PROCEDURAL_BOOK_CORPUS || { pages: [] };
+  const CORPUS = (() => {
+    const parts = window.PROCEDURAL_BOOK_CORPUS_PARTS || [];
+    return { source: parts[0]?.source || "", pages: parts.flatMap((part) => part.pages || []) };
+  })();
   const ENFORCEMENT_BOOK = window.ENFORCEMENT_BOOK || { meta: {}, parts: [], sections: [], rules: [], quiz: [] };
   const CIVIL_LAW = window.CIVIL_PROCEDURE_LAW || { meta: {}, sections: [], articles: [], quiz: [] };
   const ENFORCEMENT_CORPUS = (() => {
@@ -316,6 +319,7 @@
     judgmentFileName: "",
     judgmentAnalysis: null,
     bookFilter: "all",
+    bookPart: 0,
     bookSearch: "",
     bookSelected: "",
     enforcementFilter: "all",
@@ -331,6 +335,7 @@
   };
 
   let state = loadState();
+  let bookLimit = 48;
 
   function loadState() {
     try {
@@ -347,6 +352,7 @@
       if (!enforcementBookItems().some((item) => item.id === merged.enforcementSelected)) merged.enforcementSelected = enforcementBookItems().find((item) => item.type === "principle")?.id || "";
       if (!civilLawItems().some((item) => item.id === merged.lawSelected)) merged.lawSelected = CIVIL_LAW.articles[0]?.id || "";
       if (!BOOK.sections.length && merged.bookFilter !== "all") merged.bookFilter = "all";
+      if (!Number.isInteger(merged.bookPart) || merged.bookPart < 0 || !(BOOK.parts || []).some((part) => part.id === merged.bookPart)) merged.bookPart = 0;
       if (!ENFORCEMENT_BOOK.sections.length && merged.enforcementFilter !== "all") merged.enforcementFilter = "all";
       if (!CIVIL_LAW.sections.length && merged.lawFilter !== "all") merged.lawFilter = "all";
       if (typeof merged.judgmentTitle !== "string") merged.judgmentTitle = "";
@@ -823,32 +829,41 @@
     const items = bookItems();
     const query = normalizeBookText(state.bookSearch);
     const filter = state.bookFilter || "all";
+    const part = state.bookPart || 0;
     const filtered = items.filter((item) => {
       const filterMatch = filter === "all" ? (query || item.type !== "text") : (filter === "principle" && item.type === "principle") || (filter === "chapter" && item.type === "chapter") || (filter === "part" && item.type === "part") || (filter === "text" && item.type === "text");
       if (!filterMatch) return false;
+      if (part && item.type === "text" && !item.tags.includes(`الجزء ${part}`)) return false;
       if (!query) return true;
       return bookQueryMatches(item, query);
     });
     const order = { chapter: 0, principle: 1, part: 2, text: 3 };
-    const ordered = [...filtered].sort((a, b) => (query ? 0 : (order[a.type] || 9) - (order[b.type] || 9)) || (a.page || 0) - (b.page || 0));
-    const visible = ordered.slice(0, 48);
+    const ordered = [...filtered].sort((a, b) => (query ? 0 : (order[a.type] ?? 9) - (order[b.type] ?? 9)) || (a.page || 0) - (b.page || 0));
+    const visible = ordered.slice(0, bookLimit);
     $("#bookPageCount").textContent = String(BOOK.meta.sourcePageCount || 350);
     $("#bookPartCount").textContent = String(BOOK.meta.sourceParts || 8);
     $("#bookRuleCount").textContent = String((BOOK.rules || []).length);
-    $("#bookTextPageCount").textContent = String(BOOK.meta.sourceTextPageCount || CORPUS.pages.length || 0);
+    $("#bookTextPageCount").textContent = String((CORPUS.pages || []).length);
     $("#bookChapterCount").textContent = String((BOOK.sections || []).reduce((total, section) => total + 1 + (section.chapters || []).length, 0));
-    $("#bookEditionNote").textContent = BOOK.meta.editionNote || "مرجع تعليمي مرفوع داخل المختبر.";
+    $("#bookEditionNote").textContent = CORPUS.pages?.length ? (BOOK.meta.editionNote || "مرجع تعليمي مرفوع داخل المختبر.") : "تعذّر تحميل نص الكتاب؛ تحقّق من اتصالك بالإنترنت ثم أعد فتح الصفحة.";
+    $("#bookPartGrid").innerHTML = (BOOK.parts || []).map((bookPart) => {
+      const count = (CORPUS.pages || []).filter((page) => page.part === bookPart.id).length;
+      return `<button type="button" class="book-part-tile ${filter === "text" && part === bookPart.id ? "active" : ""}" data-book-part="${bookPart.id}" aria-pressed="${filter === "text" && part === bookPart.id}"><span>الجزء ${bookPart.id} · ص ${escapeHtml(bookPart.pages)}</span><strong>${escapeHtml(bookPart.title)}</strong><small>${count} صفحة نصية · افتح الجزء ←</small></button>`;
+    }).join("");
     $$("#bookFilters button").forEach((button) => button.classList.toggle("active", button.dataset.bookFilter === filter));
-    $("#bookResultsTitle").textContent = query ? `نتائج البحث عن «${state.bookSearch}»` : filter === "principle" ? "القواعد المرتبطة بالممارسة" : filter === "part" ? "الأجزاء المرفوعة" : filter === "text" ? "صفحات النص الكامل" : "خريطة الأبواب والفصول";
+    $("#bookResultsTitle").textContent = query ? `نتائج البحث عن «${state.bookSearch}»${part && filter === "text" ? ` في الجزء ${part}` : ""}` : filter === "principle" ? "القواعد المرتبطة بالممارسة" : filter === "part" ? "الأجزاء المرفوعة" : filter === "text" ? (part ? `صفحات الجزء ${part}` : "صفحات النص الكامل") : "خريطة الأبواب والفصول";
     $("#bookResultsCount").textContent = `${filtered.length} نتيجة`;
     const results = $("#bookResults");
     if (!visible.length) {
-      results.innerHTML = '<div class="book-empty">لا توجد نتيجة مطابقة. جرّب كلمة أوسع مثل «الدعوى» أو «الحكم».</div>';
+      results.innerHTML = CORPUS.pages?.length ? '<div class="book-empty">لا توجد نتيجة مطابقة. جرّب كلمة أوسع مثل «الدعوى» أو «الحكم».</div>' : '<div class="book-empty">تعذّر تحميل نص كتاب الإجراءات المدنية. أعد تحميل الصفحة للتأكد من اكتمال الاتصال.</div>';
     } else {
       results.innerHTML = visible.map((item) => `<article class="book-result ${state.bookSelected === item.id ? "selected" : ""}" data-book-id="${escapeHtml(item.id)}"><div class="book-result-topline"><strong>${escapeHtml(item.label)}</strong><span class="book-result-page">ص ${escapeHtml(item.page)}</span></div><h4>${escapeHtml(item.title)}</h4><p>${escapeHtml(item.summary)}</p><div class="book-result-tags">${(item.tags || []).slice(0, 4).map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}</div></article>`).join("");
     }
-    if (!state.bookSelected && visible[0]) state.bookSelected = visible[0].id;
-    renderBookApplication(items.find((item) => item.id === state.bookSelected) || visible[0]);
+    const more = $("#bookLoadMore");
+    more.classList.toggle("hidden", visible.length >= filtered.length);
+    more.textContent = `عرض ${Math.min(48, filtered.length - visible.length)} نتيجة إضافية`;
+    if (!visible.some((item) => item.id === state.bookSelected)) state.bookSelected = visible[0]?.id || "";
+    renderBookApplication(visible.find((item) => item.id === state.bookSelected));
     const moduleLinks = [
       ["simulator", "◎", "المحاكاة الإجرائية", "قرار يختبر القاعدة"],
       ["court", "⚖", "المحكمة الافتراضية", "مرافعة وتعليل"],
@@ -1470,6 +1485,17 @@
       if (lawArticle) { selectCivilLawArticle(lawArticle.dataset.lawId); return; }
       const lawSection = event.target.closest("[data-law-section]");
       if (lawSection) { state.lawFilter = lawSection.dataset.lawSection; saveState(); renderCivilLawSource(); return; }
+      const bookPart = event.target.closest("[data-book-part]");
+      if (bookPart) {
+        state.bookPart = Number(bookPart.dataset.bookPart);
+        state.bookFilter = "text";
+        state.bookSearch = "";
+        bookLimit = 48;
+        saveState();
+        renderBook();
+        $("#bookResultsTitle").scrollIntoView({ block: "start", behavior: "smooth" });
+        return;
+      }
       const viewTrigger = event.target.closest("[data-view]");
       if (viewTrigger) {
         event.preventDefault();
@@ -1517,8 +1543,9 @@
     $("#judgmentTitle").addEventListener("input", (event) => { state.judgmentTitle = event.target.value; saveState(); });
     $("#judgmentText").addEventListener("input", (event) => { state.judgmentText = event.target.value; $("#judgmentCharCount").textContent = `${wordCount(event.target.value)} كلمة`; saveState(); });
     $("#analyzeJudgment").addEventListener("click", analyzeJudgment);
-    $("#bookSearch").addEventListener("input", (event) => { state.bookSearch = event.target.value; saveState(); renderBook(); });
-    $("#bookFilters").addEventListener("click", (event) => { const filter = event.target.closest("button[data-book-filter]"); if (!filter) return; state.bookFilter = filter.dataset.bookFilter; saveState(); renderBook(); });
+    $("#bookSearch").addEventListener("input", (event) => { state.bookSearch = event.target.value; bookLimit = 48; saveState(); renderBook(); });
+    $("#bookFilters").addEventListener("click", (event) => { const filter = event.target.closest("button[data-book-filter]"); if (!filter) return; state.bookFilter = filter.dataset.bookFilter; bookLimit = 48; saveState(); renderBook(); });
+    $("#bookLoadMore").addEventListener("click", () => { bookLimit += 48; renderBook(); });
     $("#enforcementSearch").addEventListener("input", (event) => { state.enforcementSearch = event.target.value; saveState(); renderEnforcementBook(); });
     $("#enforcementFilters").addEventListener("click", (event) => { const filter = event.target.closest("button[data-enforcement-filter]"); if (!filter) return; state.enforcementFilter = filter.dataset.enforcementFilter; saveState(); renderEnforcementBook(); });
     $("#civilLawSearch").addEventListener("input", (event) => { state.lawSearch = event.target.value; saveState(); renderCivilLawSource(); });
