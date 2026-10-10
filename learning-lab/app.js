@@ -16,6 +16,7 @@
   })();
   const ENFORCEMENT_BOOK = window.ENFORCEMENT_BOOK || { meta: {}, parts: [], sections: [], rules: [], quiz: [] };
   const CIVIL_LAW = window.CIVIL_PROCEDURE_LAW || { meta: {}, sections: [], articles: [], quiz: [] };
+  const THINKING_CASES = window.THINKING_CASES || [];
   const ENFORCEMENT_CORPUS = (() => {
     const parts = window.ENFORCEMENT_BOOK_CORPUS_PARTS || [];
     return { source: parts[0]?.source || "", pages: parts.flatMap((part) => part.pages || []) };
@@ -322,6 +323,8 @@
     bookPart: 0,
     bookSearch: "",
     bookSelected: "",
+    thinkingCase: "filing",
+    thinkingEntries: {},
     enforcementFilter: "all",
     enforcementSearch: "",
     enforcementSelected: "",
@@ -355,6 +358,8 @@
       if (!Number.isInteger(merged.bookPart) || merged.bookPart < 0 || !(BOOK.parts || []).some((part) => part.id === merged.bookPart)) merged.bookPart = 0;
       if (!ENFORCEMENT_BOOK.sections.length && merged.enforcementFilter !== "all") merged.enforcementFilter = "all";
       if (!CIVIL_LAW.sections.length && merged.lawFilter !== "all") merged.lawFilter = "all";
+      if (!THINKING_CASES.some((caseData) => caseData.id === merged.thinkingCase)) merged.thinkingCase = THINKING_CASES[0]?.id || "filing";
+      merged.thinkingEntries = merged.thinkingEntries && typeof merged.thinkingEntries === "object" && !Array.isArray(merged.thinkingEntries) ? { ...merged.thinkingEntries } : {};
       if (typeof merged.judgmentTitle !== "string") merged.judgmentTitle = "";
       if (typeof merged.judgmentText !== "string") merged.judgmentText = "";
       if (typeof merged.judgmentFileName !== "string") merged.judgmentFileName = "";
@@ -416,6 +421,7 @@
     if (view === "ai") renderAI();
     if (view === "judgment") renderJudgment();
     if (view === "book") renderBook();
+    if (view === "thinking") renderThinking();
     if (view === "enforcement-book") renderEnforcementBook();
     if (view === "quiz") renderQuiz();
     if (view === "map") renderMap();
@@ -782,6 +788,88 @@
       .slice(0, limit);
   }
 
+  function activeThinkingCase() {
+    return THINKING_CASES.find((caseData) => caseData.id === state.thinkingCase) || THINKING_CASES[0];
+  }
+
+  function activeThinkingEntry(caseData = activeThinkingCase()) {
+    if (!caseData) return null;
+    const current = state.thinkingEntries[caseData.id];
+    if (!current || typeof current !== "object" || Array.isArray(current)) {
+      state.thinkingEntries[caseData.id] = { phase: 0, issue: "", facts: [], tools: [], first: "", second: "", conclusion: "", variation: "" };
+    }
+    const entry = state.thinkingEntries[caseData.id];
+    if (!Number.isInteger(entry.phase) || entry.phase < 0 || entry.phase > 4) entry.phase = 0;
+    if (!Array.isArray(entry.facts)) entry.facts = [];
+    if (!Array.isArray(entry.tools)) entry.tools = [];
+    for (const field of ["issue", "first", "second", "conclusion", "variation"]) {
+      if (typeof entry[field] !== "string") entry[field] = "";
+    }
+    return entry;
+  }
+
+  function thinkingToolInfo(caseData, tool) {
+    if (tool.kind === "law") {
+      const article = (CIVIL_LAW.articles || []).find((item) => item.number === tool.id);
+      return { title: `المادة (${tool.id}) · ${article?.topic || "قانون الإجراءات المدنية"}`, source: `قانون الإجراءات المدنية، المادة ${tool.id}`, text: article?.text || "نص المادة غير مرفق في المنصة.", view: "sources" };
+    }
+    const catalog = caseData.track === "procedure" ? BOOK : ENFORCEMENT_BOOK;
+    const rule = (catalog.rules || []).find((item) => item.id === tool.id);
+    return { title: rule?.title || "قاعدة من الكتاب", source: `${catalog.meta?.title || "الكتاب"} · ${rule?.source || "راجع الفهرس"}`, text: rule?.principle || "راجع باب الكتاب في الموسوعة.", view: caseData.track === "procedure" ? "book" : "enforcement-book" };
+  }
+
+  function renderThinking() {
+    const caseData = activeThinkingCase();
+    const workspace = $("#thinkingWorkspace");
+    if (!workspace) return;
+    if (!caseData) { workspace.textContent = "لم تُحمّل الوقائع التدريبية بعد. أعد تحميل الصفحة."; return; }
+    const entry = activeThinkingEntry(caseData);
+    const esc = escapeHtml;
+    $("#thinkingCaseTabs").innerHTML = THINKING_CASES.map((item) => {
+      const done = state.thinkingEntries[item.id]?.phase === 4;
+      return `<button type="button" class="thinking-case-tab ${caseData.id === item.id ? "active" : ""}" data-thinking-case="${esc(item.id)}" aria-pressed="${caseData.id === item.id}"><span>${item.track === "procedure" ? "الإجراءات المدنية" : "التنفيذ الجبري"}</span><strong>${esc(item.title)}</strong><small>${done ? "✓ تحليل مكتمل" : esc(item.level)}</small></button>`;
+    }).join("");
+    const phases = ["صغ السؤال", "ميّز الوقائع", "اطلب الأدوات", "حجج الطرفين", "راجع التحليل"];
+    $("#thinkingProgress").innerHTML = phases.map((label, index) => `<span class="thinking-phase ${index === entry.phase ? "active" : index < entry.phase ? "done" : ""}" ${index === entry.phase ? 'aria-current="step"' : ""}><b>${index < entry.phase ? "✓" : index + 1}</b>${label}</span>`).join("");
+    $("#thinkingCaseLabel").textContent = caseData.track === "procedure" ? "ملف الإجراءات المدنية" : "ملف التنفيذ الجبري";
+    $("#thinkingCaseTitle").textContent = caseData.title;
+    $("#thinkingCaseLevel").textContent = caseData.level;
+    $("#thinkingStory").innerHTML = caseData.story.map((line) => `<p>${esc(line)}</p>`).join("");
+    $("#thinkingQuestion").textContent = entry.phase ? caseData.question : "ما المشكلة الإجرائية التي تحتاج إلى حسم؟ اكتب السؤال بصياغتك أولاً.";
+
+    if (entry.phase === 0) {
+      workspace.innerHTML = `<div class="thinking-work-card"><p class="eyebrow">01 · قبل قراءة القاعدة</p><h3>ما السؤال الذي ينبغي أن يجيب عنه القاضي؟</h3><p>صياغة السؤال هي بداية التحليل؛ اكتب فرضيتك، ولو لم تكن متأكداً منها بعد.</p><label class="thinking-field" for="thinkingIssue">المشكلة القانونية بصياغتك<textarea id="thinkingIssue" data-thinking-field="issue" maxlength="4000" placeholder="هل...؟ وما الوقائع التي أحتاج إلى التحقق منها؟">${esc(entry.issue)}</textarea></label><button type="button" class="primary-button" data-thinking-next="1">ثبّت سؤالي وانتقل إلى الوقائع ←</button></div>`;
+    } else if (entry.phase === 1) {
+      workspace.innerHTML = `<div class="thinking-work-card"><p class="eyebrow">02 · وقائع تصنع الفرق</p><h3>أي الوقائع قد تغيّر النتيجة؟</h3><p>اختر واقعتين على الأقل. ستراجع لاحقاً أثر ما اخترته وما أغفلته.</p><div class="thinking-choices">${caseData.facts.map((fact, index) => `<button type="button" class="thinking-choice ${entry.facts.includes(index) ? "active" : ""}" aria-pressed="${entry.facts.includes(index)}" data-thinking-fact="${index}"><span aria-hidden="true">${entry.facts.includes(index) ? "✓" : "+"}</span>${esc(fact.text)}</button>`).join("")}</div><button type="button" class="primary-button" data-thinking-next="2">ثبّت الوقائع واطلب الأدوات ←</button></div>`;
+    } else if (entry.phase === 2) {
+      const readings = caseData.tools.filter((tool) => entry.tools.includes(`${tool.kind}:${tool.id}`)).map((tool) => {
+        const info = thinkingToolInfo(caseData, tool);
+        return `<details class="thinking-reading"><summary>${esc(info.title)} <small>${esc(info.source)}</small></summary><div class="thinking-reading-text">${esc(info.text)}</div><button type="button" class="thinking-source-button" data-thinking-open-source="${esc(tool.kind)}:${esc(tool.id)}">اقرأ في المصادر ↗</button></details>`;
+      }).join("");
+      workspace.innerHTML = `<div class="thinking-work-card"><p class="eyebrow">03 · القواعد عند الحاجة</p><h3>أي النصوص والقواعد تطلب الآن؟</h3><p>اختر مادة قانونية وقاعدة من أحد الكتابين على الأقل، ثم افتح ما اخترته واقرأه قبل بناء الحجج.</p><div class="thinking-tools">${caseData.tools.map((tool) => { const info = thinkingToolInfo(caseData, tool); const key = `${tool.kind}:${tool.id}`; return `<button type="button" class="thinking-tool ${entry.tools.includes(key) ? "active" : ""}" data-thinking-tool="${esc(key)}" aria-pressed="${entry.tools.includes(key)}"><span>${tool.kind === "law" ? "§ مادة قانونية" : "▦ مرجع الكتاب"}</span><strong>${esc(info.title)}</strong></button>`; }).join("")}</div><div class="thinking-readings">${readings || '<p class="thinking-placeholder">اختر أداة لتقرأ نصها هنا. لا يظهر النموذج التحليلي قبل كتابة حججك.</p>'}</div><button type="button" class="primary-button" data-thinking-next="3">انتقل إلى حجج الطرفين ←</button></div>`;
+    } else if (entry.phase === 3) {
+      workspace.innerHTML = `<div class="thinking-work-card"><p class="eyebrow">04 · توازن الخصومة</p><h3>ابنِ حجة لكل طرف ثم رجّح</h3><p>اربط كل حجة بواقعة ونص. اكتب نتيجة مشروطة بما قد يثبت من وقائع، ثم غيّر واقعة واحدة إن شئت.</p><div class="thinking-argument-grid"><label class="thinking-field" for="thinkingFirst">حجة ${esc(caseData.parties[0])}<textarea id="thinkingFirst" data-thinking-field="first" maxlength="4000" placeholder="الواقعة → النص → الأثر">${esc(entry.first)}</textarea></label><label class="thinking-field" for="thinkingSecond">حجة ${esc(caseData.parties[1])}<textarea id="thinkingSecond" data-thinking-field="second" maxlength="4000" placeholder="ما الرد القانوني المقابل؟">${esc(entry.second)}</textarea></label></div><label class="thinking-field" for="thinkingConclusion">النتيجة الأرجح وسببها<textarea id="thinkingConclusion" data-thinking-field="conclusion" maxlength="4000" placeholder="إذا ثبت... فإن...، أما إذا...">${esc(entry.conclusion)}</textarea></label><label class="thinking-field" for="thinkingVariation">ماذا لو تغيّرت واقعة واحدة؟ <small>اختياري</small><textarea id="thinkingVariation" data-thinking-field="variation" maxlength="2000" placeholder="لو ثبت خلاف ذلك، ماذا يتغير في التحليل؟">${esc(entry.variation)}</textarea></label><button type="button" class="primary-button" data-thinking-next="4">اكشف المراجعة وقارن تحليلك ←</button></div>`;
+    } else {
+      const missedFacts = caseData.facts.filter((fact, index) => fact.relevant && !entry.facts.includes(index)).map((fact) => fact.text);
+      const missedTools = caseData.tools.filter((tool) => tool.essential && !entry.tools.includes(`${tool.kind}:${tool.id}`)).map((tool) => thinkingToolInfo(caseData, tool).title);
+      workspace.innerHTML = `<div class="thinking-work-card thinking-review"><p class="eyebrow">05 · أعد قراءة النزاع</p><h3>قارن حجتك بالمراجعة الموجّهة</h3><p>هذه أمثلة للحجج ومسار للمراجعة، وليست حكماً قضائياً ولا تقييماً آلياً لصحة صياغتك.</p><div class="thinking-feedback"><strong>قائمة مراجعة لما اخترته</strong><p>${missedFacts.length ? `وقائع تستحق العودة إليها: ${esc(missedFacts.join("، "))}.` : "رصدت الوقائع الرئيسة في هذه الواقعة."}</p><p>${missedTools.length ? `راجع أيضاً: ${esc(missedTools.join("، "))}.` : "طلبت الأدوات الأساسية لهذه الواقعة."}</p></div><div class="thinking-comparison"><article><span>سؤالك</span><p class="thinking-user-text">${esc(entry.issue)}</p><strong>صياغة استرشادية</strong><p>${esc(caseData.sample.issue)}</p></article><article><span>حجة ${esc(caseData.parties[0])}</span><p class="thinking-user-text">${esc(entry.first)}</p><strong>وجه محتمل</strong><p>${esc(caseData.sample.first)}</p></article><article><span>حجة ${esc(caseData.parties[1])}</span><p class="thinking-user-text">${esc(entry.second)}</p><strong>وجه محتمل</strong><p>${esc(caseData.sample.second)}</p></article><article><span>ترجيحك</span><p class="thinking-user-text">${esc(entry.conclusion)}</p><strong>مراجعة مشروطة</strong><p>${esc(caseData.sample.conclusion)}</p></article></div><div class="thinking-change"><strong>غيّر واقعة ثم أعد التحليل</strong><p>${esc(caseData.sample.change)}</p>${entry.variation ? `<p class="thinking-user-text">أنت اقترحت: ${esc(entry.variation)}</p>` : ""}</div><details class="thinking-teacher"><summary>سؤال متابعة للأستاذ</summary><p>${esc(caseData.sample.teacher)}</p></details><div class="thinking-review-actions"><button type="button" class="primary-button" data-thinking-ai="1">انقل حجتي إلى مساعد الصياغة ←</button><button type="button" class="ghost-button" data-thinking-reset="1">أعد تحليل هذه الواقعة</button></div></div>`;
+    }
+  }
+
+  function advanceThinking(nextPhase) {
+    const caseData = activeThinkingCase();
+    const entry = activeThinkingEntry(caseData);
+    if (!entry || nextPhase !== entry.phase + 1) return;
+    if (entry.phase === 0 && entry.issue.trim().length < 12) return showToast("صغ المشكلة القانونية في جملة قصيرة أولاً.");
+    if (entry.phase === 1 && entry.facts.length < 2) return showToast("اختر واقعتين على الأقل قبل طلب الأدوات.");
+    if (entry.phase === 2 && (!entry.tools.some((key) => key.startsWith("law:")) || !entry.tools.some((key) => key.startsWith("book:")))) return showToast("اختر مادة من القانون وقاعدة من الكتاب على الأقل.");
+    if (entry.phase === 3 && [entry.first, entry.second, entry.conclusion].some((answer) => answer.trim().length < 20)) return showToast("اكتب حجة لكل طرف ونتيجة معلّلة قبل المراجعة.");
+    entry.phase = nextPhase;
+    if (nextPhase === 4) addActivity(`تفكير إجرائي: ${caseData.title}`, "حجج الطرفين ومراجعة النصوص", "تحليل");
+    saveState();
+    renderThinking();
+  }
+
   function bookChapterItems() {
     return (BOOK.sections || []).flatMap((section) => [
       { type: "chapter", id: `section-${section.id}`, title: section.title, label: section.number, page: section.page, summary: section.summary, tags: ["باب", section.title], parent: section.title, tone: section.tone },
@@ -865,6 +953,7 @@
     if (!visible.some((item) => item.id === state.bookSelected)) state.bookSelected = visible[0]?.id || "";
     renderBookApplication(visible.find((item) => item.id === state.bookSelected));
     const moduleLinks = [
+      ["thinking", "💭", "مختبر التفكير", "ابدأ بواقعة ثم اختر القاعدة"],
       ["simulator", "◎", "المحاكاة الإجرائية", "قرار يختبر القاعدة"],
       ["court", "⚖", "المحكمة الافتراضية", "مرافعة وتعليل"],
       ["ai", "✦", "المساعد الذكي", "صياغة ومراجعة"],
@@ -982,6 +1071,7 @@
     if (!state.enforcementSelected && visible[0]) state.enforcementSelected = visible[0].id;
     renderEnforcementApplication(items.find((item) => item.id === state.enforcementSelected) || visible[0]);
     const moduleLinks = [
+      ["thinking", "💭", "مختبر التفكير", "نقاش نزاع تنفيذي من الوقائع"],
       ["execution", "↗", "غرفة التنفيذ", "اختيار الحجز ومساره"],
       ["simulator", "◎", "المحاكاة الإجرائية", "بوابات السند والمهلة"],
       ["court", "⚖", "المحكمة الافتراضية", "منازعة وتعليل"],
@@ -1435,7 +1525,7 @@
 
   function resetProgress() {
     if (!window.confirm("سيؤدي ذلك إلى مسح تقدمك المحلي في المختبر. هل تريد المتابعة؟")) return;
-    state = { ...defaultState };
+    state = { ...defaultState, thinkingEntries: {} };
     saveState();
     renderView(state.view);
     renderDashboard();
@@ -1485,6 +1575,53 @@
       if (lawArticle) { selectCivilLawArticle(lawArticle.dataset.lawId); return; }
       const lawSection = event.target.closest("[data-law-section]");
       if (lawSection) { state.lawFilter = lawSection.dataset.lawSection; saveState(); renderCivilLawSource(); return; }
+      const thinkingCase = event.target.closest("[data-thinking-case]");
+      if (thinkingCase) { state.thinkingCase = thinkingCase.dataset.thinkingCase; saveState(); renderThinking(); return; }
+      const thinkingFact = event.target.closest("[data-thinking-fact]");
+      if (thinkingFact) {
+        const entry = activeThinkingEntry();
+        const index = Number(thinkingFact.dataset.thinkingFact);
+        if (entry.phase !== 1 || !Number.isInteger(index) || index < 0 || index >= activeThinkingCase().facts.length) return;
+        entry.facts = entry.facts.includes(index) ? entry.facts.filter((item) => item !== index) : [...entry.facts, index];
+        saveState(); renderThinking(); return;
+      }
+      const thinkingTool = event.target.closest("[data-thinking-tool]");
+      if (thinkingTool) {
+        const entry = activeThinkingEntry();
+        const key = thinkingTool.dataset.thinkingTool;
+        if (entry.phase !== 2 || !activeThinkingCase().tools.some((tool) => `${tool.kind}:${tool.id}` === key)) return;
+        entry.tools = entry.tools.includes(key) ? entry.tools.filter((item) => item !== key) : [...entry.tools, key];
+        saveState(); renderThinking(); return;
+      }
+      const thinkingSource = event.target.closest("[data-thinking-open-source]");
+      if (thinkingSource) {
+        const caseData = activeThinkingCase();
+        const tool = caseData.tools.find((item) => `${item.kind}:${item.id}` === thinkingSource.dataset.thinkingOpenSource);
+        if (!tool) return;
+        if (tool.kind === "law") {
+          state.lawFilter = "all"; state.lawSearch = "";
+          state.lawSelected = (CIVIL_LAW.articles || []).find((article) => article.number === tool.id)?.id || "";
+          saveState(); setView("sources");
+        } else {
+          const civil = caseData.track === "procedure";
+          if (civil) { state.bookFilter = "principle"; state.bookSearch = ""; state.bookSelected = tool.id; }
+          else { state.enforcementFilter = "principle"; state.enforcementSearch = ""; state.enforcementSelected = `enforcement-rule-${tool.id}`; }
+          saveState(); setView(civil ? "book" : "enforcement-book");
+        }
+        return;
+      }
+      const thinkingNext = event.target.closest("[data-thinking-next]");
+      if (thinkingNext) { advanceThinking(Number(thinkingNext.dataset.thinkingNext)); return; }
+      const thinkingReset = event.target.closest("[data-thinking-reset]");
+      if (thinkingReset) { delete state.thinkingEntries[state.thinkingCase]; saveState(); renderThinking(); return; }
+      const thinkingAI = event.target.closest("[data-thinking-ai]");
+      if (thinkingAI) {
+        const caseData = activeThinkingCase(), entry = activeThinkingEntry(caseData);
+        if (entry.phase !== 4) return;
+        state.aiType = caseData.track === "enforcement" ? "execution" : "claim";
+        state.draft = `${caseData.title}\nالمشكلة: ${entry.issue}\nحجة ${caseData.parties[0]}: ${entry.first}\nحجة ${caseData.parties[1]}: ${entry.second}\nالترجيح: ${entry.conclusion}`;
+        saveState(); setView("ai"); return;
+      }
       const bookPart = event.target.closest("[data-book-part]");
       if (bookPart) {
         state.bookPart = Number(bookPart.dataset.bookPart);
@@ -1543,6 +1680,12 @@
     $("#judgmentTitle").addEventListener("input", (event) => { state.judgmentTitle = event.target.value; saveState(); });
     $("#judgmentText").addEventListener("input", (event) => { state.judgmentText = event.target.value; $("#judgmentCharCount").textContent = `${wordCount(event.target.value)} كلمة`; saveState(); });
     $("#analyzeJudgment").addEventListener("click", analyzeJudgment);
+    $("#thinkingWorkspace").addEventListener("input", (event) => {
+      const field = event.target.closest("textarea[data-thinking-field]");
+      if (!field || !["issue", "first", "second", "conclusion", "variation"].includes(field.dataset.thinkingField)) return;
+      activeThinkingEntry()[field.dataset.thinkingField] = field.value.slice(0, 4000);
+      saveState();
+    });
     $("#bookSearch").addEventListener("input", (event) => { state.bookSearch = event.target.value; bookLimit = 48; saveState(); renderBook(); });
     $("#bookFilters").addEventListener("click", (event) => { const filter = event.target.closest("button[data-book-filter]"); if (!filter) return; state.bookFilter = filter.dataset.bookFilter; bookLimit = 48; saveState(); renderBook(); });
     $("#bookLoadMore").addEventListener("click", () => { bookLimit += 48; renderBook(); });
@@ -1559,7 +1702,7 @@
     bindEvents();
     renderDashboard();
     const requestedView = new URLSearchParams(window.location.search).get("view");
-    setView(requestedView === "book" ? "book" : (state.view || "dashboard"));
+    setView(["book", "thinking"].includes(requestedView) ? requestedView : (state.view || "dashboard"));
   }
 
   document.addEventListener("DOMContentLoaded", init);
