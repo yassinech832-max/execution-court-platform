@@ -9,22 +9,23 @@
       content="منصة تعليمية تفاعلية للمرافعات والتنفيذ الجبري، منجزة من طرف الدكتور ياسين شامي، كلية القانون، جامعة الإمارات العربية المتحدة."
     />
     <title>مختبر ياسين شامي | المرافعات والتنفيذ الجبري</title>
-    <link rel="stylesheet" href="styles.css?v=20261010-thinking" />
-    <script defer src="book-data.js?v=20261010-thinking"></script>
-    <script defer src="book-corpus-1.js?v=20261010-thinking"></script>
-    <script defer src="book-corpus-2.js?v=20261010-thinking"></script>
-    <script defer src="book-corpus-3.js?v=20261010-thinking"></script>
-    <script defer src="book-corpus-4.js?v=20261010-thinking"></script>
-    <script defer src="book-corpus-5.js?v=20261010-thinking"></script>
-    <script defer src="book-corpus-6.js?v=20261010-thinking"></script>
-    <script defer src="book-corpus-7.js?v=20261010-thinking"></script>
-    <script defer src="book-corpus-8.js?v=20261010-thinking"></script>
-    <script defer src="enforcement-data.js?v=20261010-thinking"></script>
-    <script defer src="enforcement-corpus-1.js?v=20261010-thinking"></script>
-    <script defer src="enforcement-corpus-2.js?v=20261010-thinking"></script>
-    <script defer src="civil-law-data.js?v=20261010-thinking"></script>
-    <script defer src="thinking-data.js?v=20261010-thinking"></script>
-    <script defer src="app.js?v=20261010-thinking"></script>
+    <link rel="stylesheet" href="styles.css?v=20261010-cases36" />
+    <script defer src="book-data.js?v=20261010-cases36"></script>
+    <script defer src="book-corpus-1.js?v=20261010-cases36"></script>
+    <script defer src="book-corpus-2.js?v=20261010-cases36"></script>
+    <script defer src="book-corpus-3.js?v=20261010-cases36"></script>
+    <script defer src="book-corpus-4.js?v=20261010-cases36"></script>
+    <script defer src="book-corpus-5.js?v=20261010-cases36"></script>
+    <script defer src="book-corpus-6.js?v=20261010-cases36"></script>
+    <script defer src="book-corpus-7.js?v=20261010-cases36"></script>
+    <script defer src="book-corpus-8.js?v=20261010-cases36"></script>
+    <script defer src="enforcement-data.js?v=20261010-cases36"></script>
+    <script defer src="enforcement-corpus-1.js?v=20261010-cases36"></script>
+    <script defer src="enforcement-corpus-2.js?v=20261010-cases36"></script>
+    <script defer src="civil-law-data.js?v=20261010-cases36"></script>
+    <script defer src="thinking-data.js?v=20261010-cases36"></script>
+    <script defer src="thinking-cases-expanded.js?v=20261010-cases36"></script>
+    <script defer src="app.js?v=20261010-cases36"></script>
   </head>
   <body>
     <div class="app-shell">
@@ -55,7 +56,7 @@
           <button class="nav-item" data-view="thinking">
             <span class="nav-icon" aria-hidden="true">💭</span>
             <span>مختبر التفكير القانوني</span>
-            <span class="nav-badge new">٤ وقائع</span>
+            <span class="nav-badge new">٣٦ قضية</span>
           </button>
           <button class="nav-item" data-view="court">
             <span class="nav-icon">⚖</span>
@@ -222,7 +223,7 @@
                 <div class="path-footer"><span>5 أدوار متاحة</span><span class="arrow-circle">←</span></div>
               </article>
             </div>
-            <button type="button" class="thinking-promo" data-view="thinking"><span class="thinking-promo-icon" aria-hidden="true">💭</span><span><strong>ابدأ بالنزاع، ثم اطلب القاعدة</strong><small>أربع وقائع في الإجراءات المدنية والتنفيذ الجبري · حلّل قبل أن ترى النص والحل</small></span><span class="thinking-promo-arrow" aria-hidden="true">←</span></button>
+            <button type="button" class="thinking-promo" data-view="thinking"><span class="thinking-promo-icon" aria-hidden="true">💭</span><span><strong>ابدأ بالنزاع، ثم اطلب القاعدة</strong><small>٣٦ قضية: ١٨ للإجراءات المدنية و١٨ للتنفيذ الجبري · حلّل قبل أن ترى النص والحل</small></span><span class="thinking-promo-arrow" aria-hidden="true">←</span></button>
 
             <div class="bottom-dashboard-grid">
               <article class="activity-card">
@@ -270,6 +271,12 @@
 
           <section class="view thinking-view" id="view-thinking" data-title="مختبر التفكير القانوني">
             <div class="thinking-intro"><span class="thinking-intro-icon" aria-hidden="true">💭</span><div><p class="eyebrow">من النزاع إلى الأداة القانونية</p><h2>مختبر التفكير القانوني</h2><p>اقرأ الواقعة أولاً. حدد السؤال والوقائع المؤثرة، ثم اختر النصوص التي تحتاجها وابنِ حجة كل طرف قبل أن تكشف المراجعة.</p></div></div>
+            <div class="thinking-catalog-controls">
+              <div id="thinkingTrackFilters" class="thinking-track-filters" role="group" aria-label="اختر المقرر"></div>
+              <label class="thinking-search-label" for="thinkingCaseSearch">ابحث عن قضية<input id="thinkingCaseSearch" type="search" placeholder="مثلاً: الإعلان أو المزاد" autocomplete="off" /></label>
+              <label class="thinking-unit-label" for="thinkingUnitSelect">باب الدرس<select id="thinkingUnitSelect" aria-label="تصفية حسب باب الدرس"></select></label>
+              <span class="thinking-results-count" id="thinkingResultsCount" role="status"></span>
+            </div>
             <div class="thinking-case-tabs" id="thinkingCaseTabs" role="group" aria-label="اختر واقعة تدريبية"></div>
             <div class="thinking-progress" id="thinkingProgress" aria-label="مراحل التفكير"></div>
             <article class="thinking-case-card"><div class="thinking-case-top"><div><span class="thinking-case-label" id="thinkingCaseLabel"></span><h3 id="thinkingCaseTitle"></h3></div><span class="thinking-case-level" id="thinkingCaseLevel"></span></div><div class="thinking-story" id="thinkingStory"></div><p class="thinking-question" id="thinkingQuestion"></p></article>

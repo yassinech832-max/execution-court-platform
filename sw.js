@@ -1,5 +1,5 @@
 /* تنظيف Service Worker القديمة حتى لا تعرض النسخة السابقة من المنصة. */
-const CACHE_NAME = "yassin-shami-lab-v12-thinking";
+const CACHE_NAME = "yassin-shami-lab-v13-cases36";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

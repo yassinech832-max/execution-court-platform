@@ -324,6 +324,9 @@
     bookSearch: "",
     bookSelected: "",
     thinkingCase: "filing",
+    thinkingTrack: "procedure",
+    thinkingUnit: "all",
+    thinkingSearch: "",
     thinkingEntries: {},
     enforcementFilter: "all",
     enforcementSearch: "",
@@ -359,6 +362,11 @@
       if (!ENFORCEMENT_BOOK.sections.length && merged.enforcementFilter !== "all") merged.enforcementFilter = "all";
       if (!CIVIL_LAW.sections.length && merged.lawFilter !== "all") merged.lawFilter = "all";
       if (!THINKING_CASES.some((caseData) => caseData.id === merged.thinkingCase)) merged.thinkingCase = THINKING_CASES[0]?.id || "filing";
+      if (saved && !saved.thinkingTrack) merged.thinkingTrack = THINKING_CASES.find((caseData) => caseData.id === merged.thinkingCase)?.track || "procedure";
+      if (!["procedure", "enforcement"].includes(merged.thinkingTrack)) merged.thinkingTrack = "procedure";
+      if (!THINKING_CASES.some((caseData) => caseData.track === merged.thinkingTrack && caseData.unit === merged.thinkingUnit)) merged.thinkingUnit = "all";
+      if (typeof merged.thinkingSearch !== "string") merged.thinkingSearch = "";
+      if (THINKING_CASES.find((caseData) => caseData.id === merged.thinkingCase)?.track !== merged.thinkingTrack) merged.thinkingCase = THINKING_CASES.find((caseData) => caseData.track === merged.thinkingTrack)?.id || "filing";
       merged.thinkingEntries = merged.thinkingEntries && typeof merged.thinkingEntries === "object" && !Array.isArray(merged.thinkingEntries) ? { ...merged.thinkingEntries } : {};
       if (typeof merged.judgmentTitle !== "string") merged.judgmentTitle = "";
       if (typeof merged.judgmentText !== "string") merged.judgmentText = "";
@@ -818,17 +826,37 @@
     return { title: rule?.title || "قاعدة من الكتاب", source: `${catalog.meta?.title || "الكتاب"} · ${rule?.source || "راجع الفهرس"}`, text: rule?.principle || "راجع باب الكتاب في الموسوعة.", view: caseData.track === "procedure" ? "book" : "enforcement-book" };
   }
 
+  function renderThinkingCatalog() {
+    const esc = escapeHtml;
+    const track = state.thinkingTrack;
+    const forTrack = THINKING_CASES.filter((item) => item.track === track);
+    const units = [...new Set(forTrack.map((item) => item.unit))];
+    if (state.thinkingUnit !== "all" && !units.includes(state.thinkingUnit)) state.thinkingUnit = "all";
+    $("#thinkingTrackFilters").innerHTML = [["procedure", "الإجراءات المدنية"], ["enforcement", "التنفيذ الجبري"]].map(([id, label]) => `<button type="button" data-thinking-track="${id}" aria-pressed="${track === id}" class="thinking-track-button ${track === id ? "active" : ""}">${label} <span>${THINKING_CASES.filter((item) => item.track === id).length} قضية</span></button>`).join("");
+    $("#thinkingUnitSelect").innerHTML = `<option value="all">جميع أبواب المقرر</option>${units.map((unit) => `<option value="${esc(unit)}" ${state.thinkingUnit === unit ? "selected" : ""}>${esc(unit)} (${forTrack.filter((item) => item.unit === unit).length})</option>`).join("")}`;
+    const query = normalizeBookText(state.thinkingSearch.trim());
+    const matches = forTrack.filter((item) => (state.thinkingUnit === "all" || item.unit === state.thinkingUnit) && (!query || normalizeBookText(`${item.title} ${item.unit} ${item.question} ${item.story.join(" ")}`).includes(query)));
+    $("#thinkingResultsCount").textContent = `${matches.length} من ${forTrack.length} قضية`;
+    $("#thinkingCaseTabs").innerHTML = matches.length ? matches.map((item) => {
+      const done = state.thinkingEntries[item.id]?.phase === 4;
+      return `<button type="button" class="thinking-case-tab ${state.thinkingCase === item.id ? "active" : ""}" data-thinking-case="${esc(item.id)}" aria-pressed="${state.thinkingCase === item.id}"><span>${esc(item.unit)}</span><strong>${esc(item.title)}</strong><small>${done ? "✓ تحليل مكتمل" : esc(item.level)}</small></button>`;
+    }).join("") : `<p class="thinking-no-results">لم تظهر قضايا بهذه الكلمات. جرّب باباً آخر أو امسح البحث.</p>`;
+    return matches;
+  }
+
   function renderThinking() {
+    const matches = renderThinkingCatalog();
+    if (matches.length && !matches.some((item) => item.id === state.thinkingCase)) {
+      state.thinkingCase = matches[0].id;
+      renderThinkingCatalog();
+      saveState();
+    }
     const caseData = activeThinkingCase();
     const workspace = $("#thinkingWorkspace");
     if (!workspace) return;
     if (!caseData) { workspace.textContent = "لم تُحمّل الوقائع التدريبية بعد. أعد تحميل الصفحة."; return; }
     const entry = activeThinkingEntry(caseData);
     const esc = escapeHtml;
-    $("#thinkingCaseTabs").innerHTML = THINKING_CASES.map((item) => {
-      const done = state.thinkingEntries[item.id]?.phase === 4;
-      return `<button type="button" class="thinking-case-tab ${caseData.id === item.id ? "active" : ""}" data-thinking-case="${esc(item.id)}" aria-pressed="${caseData.id === item.id}"><span>${item.track === "procedure" ? "الإجراءات المدنية" : "التنفيذ الجبري"}</span><strong>${esc(item.title)}</strong><small>${done ? "✓ تحليل مكتمل" : esc(item.level)}</small></button>`;
-    }).join("");
     const phases = ["صغ السؤال", "ميّز الوقائع", "اطلب الأدوات", "حجج الطرفين", "راجع التحليل"];
     $("#thinkingProgress").innerHTML = phases.map((label, index) => `<span class="thinking-phase ${index === entry.phase ? "active" : index < entry.phase ? "done" : ""}" ${index === entry.phase ? 'aria-current="step"' : ""}><b>${index < entry.phase ? "✓" : index + 1}</b>${label}</span>`).join("");
     $("#thinkingCaseLabel").textContent = caseData.track === "procedure" ? "ملف الإجراءات المدنية" : "ملف التنفيذ الجبري";
@@ -1575,6 +1603,16 @@
       if (lawArticle) { selectCivilLawArticle(lawArticle.dataset.lawId); return; }
       const lawSection = event.target.closest("[data-law-section]");
       if (lawSection) { state.lawFilter = lawSection.dataset.lawSection; saveState(); renderCivilLawSource(); return; }
+      const thinkingTrack = event.target.closest("[data-thinking-track]");
+      if (thinkingTrack) {
+        if (!["procedure", "enforcement"].includes(thinkingTrack.dataset.thinkingTrack)) return;
+        state.thinkingTrack = thinkingTrack.dataset.thinkingTrack;
+        state.thinkingUnit = "all";
+        state.thinkingSearch = "";
+        $("#thinkingCaseSearch").value = "";
+        state.thinkingCase = THINKING_CASES.find((item) => item.track === state.thinkingTrack)?.id || state.thinkingCase;
+        saveState(); renderThinking(); return;
+      }
       const thinkingCase = event.target.closest("[data-thinking-case]");
       if (thinkingCase) { state.thinkingCase = thinkingCase.dataset.thinkingCase; saveState(); renderThinking(); return; }
       const thinkingFact = event.target.closest("[data-thinking-fact]");
@@ -1686,6 +1724,8 @@
       activeThinkingEntry()[field.dataset.thinkingField] = field.value.slice(0, 4000);
       saveState();
     });
+    $("#thinkingCaseSearch").addEventListener("input", (event) => { state.thinkingSearch = event.target.value.slice(0, 120); saveState(); renderThinking(); });
+    $("#thinkingUnitSelect").addEventListener("change", (event) => { state.thinkingUnit = event.target.value; saveState(); renderThinking(); });
     $("#bookSearch").addEventListener("input", (event) => { state.bookSearch = event.target.value; bookLimit = 48; saveState(); renderBook(); });
     $("#bookFilters").addEventListener("click", (event) => { const filter = event.target.closest("button[data-book-filter]"); if (!filter) return; state.bookFilter = filter.dataset.bookFilter; bookLimit = 48; saveState(); renderBook(); });
     $("#bookLoadMore").addEventListener("click", () => { bookLimit += 48; renderBook(); });
@@ -1700,6 +1740,7 @@
 
   function init() {
     bindEvents();
+    $("#thinkingCaseSearch").value = state.thinkingSearch;
     renderDashboard();
     const requestedView = new URLSearchParams(window.location.search).get("view");
     setView(["book", "thinking"].includes(requestedView) ? requestedView : (state.view || "dashboard"));
