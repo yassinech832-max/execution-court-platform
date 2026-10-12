@@ -1,5 +1,5 @@
 /* تنظيف Service Worker القديمة حتى لا تعرض النسخة السابقة من المنصة. */
-const CACHE_NAME = "yassin-shami-lab-v14-judge-assistant";
+const CACHE_NAME = "yassin-shami-lab-v15-judge-launch";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

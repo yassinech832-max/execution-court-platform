@@ -9,7 +9,7 @@
       content="منصة تعليمية تفاعلية للمرافعات والتنفيذ الجبري، منجزة من طرف الدكتور ياسين شامي، كلية القانون، جامعة الإمارات العربية المتحدة."
     />
     <title>مختبر ياسين شامي | المرافعات والتنفيذ الجبري</title>
-    <link rel="stylesheet" href="styles.css?v=20261012-judgeass1" />
+    <link rel="stylesheet" href="styles.css?v=20261012-judgeicon1" />
     <script defer src="book-data.js?v=20261012-judgeass1"></script>
     <script defer src="book-corpus-1.js?v=20261012-judgeass1"></script>
     <script defer src="book-corpus-2.js?v=20261012-judgeass1"></script>
@@ -26,9 +26,15 @@
     <script defer src="thinking-data.js?v=20261012-judgeass1"></script>
     <script defer src="thinking-cases-expanded.js?v=20261012-judgeass1"></script>
     <script defer src="judge-assistant.js?v=20261012-judgeass1"></script>
-    <script defer src="app.js?v=20261012-judgeass1"></script>
+    <script defer src="app.js?v=20261012-judgeicon1"></script>
   </head>
   <body>
+    <svg class="judge-icon-defs" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+      <symbol id="judgeInsightIcon" viewBox="0 0 48 48">
+        <path d="M24 9v29m-10 0h20M12 17h24M11 17 5 28h12l-6-11Zm26 0-6 11h12l-6-11Z" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="m37 4 1.2 2.8L41 8l-2.8 1.2L37 12l-1.2-2.8L33 8l2.8-1.2L37 4Z" fill="currentColor" />
+      </symbol>
+    </svg>
     <div class="app-shell">
       <aside class="sidebar" id="sidebar">
         <div class="brand-lockup">
@@ -60,7 +66,7 @@
             <span class="nav-badge new">٣٦ قضية</span>
           </button>
           <button class="nav-item" data-view="judge-assistant">
-            <span class="nav-icon" aria-hidden="true">⚑</span>
+            <span class="nav-icon" aria-hidden="true"><svg class="judge-icon"><use href="#judgeInsightIcon" /></svg></span>
             <span>مساعد القاضي التعليمي</span>
             <span class="nav-badge new">جديد</span>
           </button>
@@ -162,6 +168,7 @@
                 <div class="hero-actions">
                   <button class="primary-button" data-view="simulator">ابدأ سيناريو جديد <span>←</span></button>
                   <button class="ghost-button" data-view="court">ادخل المحكمة الافتراضية</button>
+                  <button class="judge-hero-shortcut" type="button" data-view="judge-assistant"><svg class="judge-icon" aria-hidden="true"><use href="#judgeInsightIcon" /></svg> مساعد القاضي</button>
                 </div>
               </div>
               <div class="hero-visual" aria-label="مخطط الرحلة الإجرائية">
@@ -174,6 +181,12 @@
                 <div class="orbit-node node-four"><span>04</span><b>توزيع</b></div>
               </div>
             </div>
+
+            <button type="button" class="judge-launch-card" data-view="judge-assistant" aria-label="افتح مساعد القاضي التعليمي لتحليل قضية افتراضية">
+              <span class="judge-launch-icon" aria-hidden="true"><svg class="judge-icon"><use href="#judgeInsightIcon" /></svg></span>
+              <span class="judge-launch-copy"><span class="judge-launch-eyebrow">جديد في المختبر · تحليل قضائي تعليمي</span><strong>مساعد القاضي التعليمي</strong><small>رتّب الوقائع والطلبات وأدلة الطرفين، واربطها بالنصوص القانونية، ثم ناقش مشروع تسبيب مع الأستاذ.</small></span>
+              <span class="judge-launch-cta">افتح المساعد <span aria-hidden="true">←</span></span>
+            </button>
 
             <div class="metric-grid">
               <article class="metric-card">
@@ -230,7 +243,6 @@
               </article>
             </div>
             <button type="button" class="thinking-promo" data-view="thinking"><span class="thinking-promo-icon" aria-hidden="true">💭</span><span><strong>ابدأ بالنزاع، ثم اطلب القاعدة</strong><small>٣٦ قضية: ١٨ للإجراءات المدنية و١٨ للتنفيذ الجبري · حلّل قبل أن ترى النص والحل</small></span><span class="thinking-promo-arrow" aria-hidden="true">←</span></button>
-            <button type="button" class="judge-dashboard-promo" data-view="judge-assistant"><span aria-hidden="true">⚑</span><span><strong>مساعد القاضي التعليمي</strong><small>ملف القضية ← أدلة الطرفين ← مواد القانون ← بحث الأحكام المنشورة ← مشروع تسبيب للمراجعة</small></span><b aria-hidden="true">←</b></button>
 
             <div class="bottom-dashboard-grid">
               <article class="activity-card">

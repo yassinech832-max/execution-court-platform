@@ -1762,7 +1762,7 @@
     $("#thinkingCaseSearch").value = state.thinkingSearch;
     renderDashboard();
     const requestedView = new URLSearchParams(window.location.search).get("view");
-    setView(["book", "thinking", "judge-assistant", "sources"].includes(requestedView) ? requestedView : (state.view || "dashboard"));
+    setView(["dashboard", "book", "thinking", "judge-assistant", "sources"].includes(requestedView) ? requestedView : (state.view || "dashboard"));
   }
 
   document.addEventListener("DOMContentLoaded", init);
