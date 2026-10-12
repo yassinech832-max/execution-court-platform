@@ -9,23 +9,24 @@
       content="منصة تعليمية تفاعلية للمرافعات والتنفيذ الجبري، منجزة من طرف الدكتور ياسين شامي، كلية القانون، جامعة الإمارات العربية المتحدة."
     />
     <title>مختبر ياسين شامي | المرافعات والتنفيذ الجبري</title>
-    <link rel="stylesheet" href="styles.css?v=20261010-cases36" />
-    <script defer src="book-data.js?v=20261010-cases36"></script>
-    <script defer src="book-corpus-1.js?v=20261010-cases36"></script>
-    <script defer src="book-corpus-2.js?v=20261010-cases36"></script>
-    <script defer src="book-corpus-3.js?v=20261010-cases36"></script>
-    <script defer src="book-corpus-4.js?v=20261010-cases36"></script>
-    <script defer src="book-corpus-5.js?v=20261010-cases36"></script>
-    <script defer src="book-corpus-6.js?v=20261010-cases36"></script>
-    <script defer src="book-corpus-7.js?v=20261010-cases36"></script>
-    <script defer src="book-corpus-8.js?v=20261010-cases36"></script>
-    <script defer src="enforcement-data.js?v=20261010-cases36"></script>
-    <script defer src="enforcement-corpus-1.js?v=20261010-cases36"></script>
-    <script defer src="enforcement-corpus-2.js?v=20261010-cases36"></script>
-    <script defer src="civil-law-data.js?v=20261010-cases36"></script>
-    <script defer src="thinking-data.js?v=20261010-cases36"></script>
-    <script defer src="thinking-cases-expanded.js?v=20261010-cases36"></script>
-    <script defer src="app.js?v=20261010-cases36"></script>
+    <link rel="stylesheet" href="styles.css?v=20261012-judgeass1" />
+    <script defer src="book-data.js?v=20261012-judgeass1"></script>
+    <script defer src="book-corpus-1.js?v=20261012-judgeass1"></script>
+    <script defer src="book-corpus-2.js?v=20261012-judgeass1"></script>
+    <script defer src="book-corpus-3.js?v=20261012-judgeass1"></script>
+    <script defer src="book-corpus-4.js?v=20261012-judgeass1"></script>
+    <script defer src="book-corpus-5.js?v=20261012-judgeass1"></script>
+    <script defer src="book-corpus-6.js?v=20261012-judgeass1"></script>
+    <script defer src="book-corpus-7.js?v=20261012-judgeass1"></script>
+    <script defer src="book-corpus-8.js?v=20261012-judgeass1"></script>
+    <script defer src="enforcement-data.js?v=20261012-judgeass1"></script>
+    <script defer src="enforcement-corpus-1.js?v=20261012-judgeass1"></script>
+    <script defer src="enforcement-corpus-2.js?v=20261012-judgeass1"></script>
+    <script defer src="civil-law-data.js?v=20261012-judgeass1"></script>
+    <script defer src="thinking-data.js?v=20261012-judgeass1"></script>
+    <script defer src="thinking-cases-expanded.js?v=20261012-judgeass1"></script>
+    <script defer src="judge-assistant.js?v=20261012-judgeass1"></script>
+    <script defer src="app.js?v=20261012-judgeass1"></script>
   </head>
   <body>
     <div class="app-shell">
@@ -57,6 +58,11 @@
             <span class="nav-icon" aria-hidden="true">💭</span>
             <span>مختبر التفكير القانوني</span>
             <span class="nav-badge new">٣٦ قضية</span>
+          </button>
+          <button class="nav-item" data-view="judge-assistant">
+            <span class="nav-icon" aria-hidden="true">⚑</span>
+            <span>مساعد القاضي التعليمي</span>
+            <span class="nav-badge new">جديد</span>
           </button>
           <button class="nav-item" data-view="court">
             <span class="nav-icon">⚖</span>
@@ -224,6 +230,7 @@
               </article>
             </div>
             <button type="button" class="thinking-promo" data-view="thinking"><span class="thinking-promo-icon" aria-hidden="true">💭</span><span><strong>ابدأ بالنزاع، ثم اطلب القاعدة</strong><small>٣٦ قضية: ١٨ للإجراءات المدنية و١٨ للتنفيذ الجبري · حلّل قبل أن ترى النص والحل</small></span><span class="thinking-promo-arrow" aria-hidden="true">←</span></button>
+            <button type="button" class="judge-dashboard-promo" data-view="judge-assistant"><span aria-hidden="true">⚑</span><span><strong>مساعد القاضي التعليمي</strong><small>ملف القضية ← أدلة الطرفين ← مواد القانون ← بحث الأحكام المنشورة ← مشروع تسبيب للمراجعة</small></span><b aria-hidden="true">←</b></button>
 
             <div class="bottom-dashboard-grid">
               <article class="activity-card">
@@ -282,6 +289,26 @@
             <article class="thinking-case-card"><div class="thinking-case-top"><div><span class="thinking-case-label" id="thinkingCaseLabel"></span><h3 id="thinkingCaseTitle"></h3></div><span class="thinking-case-level" id="thinkingCaseLevel"></span></div><div class="thinking-story" id="thinkingStory"></div><p class="thinking-question" id="thinkingQuestion"></p></article>
             <div class="thinking-workspace" id="thinkingWorkspace" aria-live="polite"></div>
             <p class="thinking-footnote">نشاط تدريبي: تظل حجج الطالب وتقديرها النهائي محل مناقشة الأستاذ. النصوص المعروضة مأخوذة من المواد المرفقة داخل المنصة، ويُتاح رابط المصدر الرسمي للتحقق من التحديثات.</p>
+          </section>
+
+          <section class="view judge-assistant-view" id="view-judge-assistant" data-title="مساعد القاضي التعليمي">
+            <header class="judge-hero"><div><p class="eyebrow">من ملف النزاع إلى مشروع التسبيب</p><h2>مساعد القاضي التعليمي</h2><p>افحص الوقائع والطلبات والدفاع والأدلة، اختر النصوص المناسبة، ثم اكتب وجه انطباقها. تتكون مسودة معلّلة قابلة للمناقشة مع الأستاذ.</p><span class="judge-hero-caveat">نموذج تعليمي محلي · لا يصدر حكماً · لا يتحقق آلياً من الوقائع أو الأحكام</span></div><span class="judge-hero-icon" aria-hidden="true">⚖</span></header>
+            <nav class="judge-stage-bar" aria-label="خطوات الدراسة"><span>١ · ملف النزاع</span><span>٢ · النصوص القانونية</span><span>٣ · الأحكام المنشورة</span><span>٤ · مشروع التسبيب</span><span>٥ · مراجعة بشرية</span></nav>
+            <div class="judge-layout">
+              <div class="judge-main-column">
+                <section class="judge-panel"><div class="judge-panel-head"><span>01</span><div><h3>ملف القضية</h3><p>ابدأ بمثال تعليمي أو اكتب قضية افتراضية من المقرر.</p></div></div>
+                  <div class="judge-presets" id="judgePresets" role="group" aria-label="أمثلة قضايا افتراضية"></div>
+                  <div class="judge-form-grid"><label>نوع المسار<select id="judgeTrack"><option value="procedure">الإجراءات المدنية</option><option value="enforcement">التنفيذ الجبري</option></select></label><label>عنوان الملف<input id="judgeTitle" maxlength="100" placeholder="مثال: إعلان شركة على بريد قديم" /></label></div>
+                  <label class="judge-field">الوقائع الثابتة أو محل النزاع<textarea id="judgeFacts" maxlength="3500" placeholder="من فعل ماذا؟ ومتى؟ وما الذي لا يزال محل نزاع؟"></textarea></label>
+                  <div class="judge-form-grid"><label>طلب الطرف الأول<textarea id="judgeClaim" maxlength="1600" placeholder="الطلب وأساسه الواقعي"></textarea></label><label>رد الطرف الثاني<textarea id="judgeDefense" maxlength="1600" placeholder="الدفع أو المنازعة في الوقائع"></textarea></label><label>مستندات تؤيد الطرف الأول<textarea id="judgeClaimEvidence" maxlength="1200" placeholder="حدّد المستند لا الاستنتاج"></textarea></label><label>مستندات تؤيد الطرف الثاني<textarea id="judgeDefenseEvidence" maxlength="1200" placeholder="حدّد مستند النفي أو الاعتراض"></textarea></label></div>
+                  <div class="judge-form-actions"><button id="judgeAnalyze" class="primary-button" type="button">حلّل الملف وابحث عن النصوص ←</button><button id="judgeClear" class="ghost-button" type="button">ابدأ ملفاً جديداً</button></div><p class="judge-inline-message" id="judgeMessage" role="status"></p>
+                </section>
+                <section class="judge-panel" id="judgeLawPanel"><div class="judge-panel-head"><span>02</span><div><h3>النصوص المناسبة</h3><p>ترشيح بحثي من المواد المرفقة. اختيار النص لا يثبت انطباقه: اقرأه واكتب صلته بالواقعة.</p></div></div><div id="judgeLawResults" class="judge-law-results"></div><div class="judge-manual-law"><label for="judgeArticleNumber">رقم مادة أخرى من السجل</label><input id="judgeArticleNumber" inputmode="numeric" type="number" min="1" max="338" placeholder="مثلاً ٢٣٩" /><button id="judgeAddArticle" type="button" class="ghost-button">أضف المادة</button></div><label class="judge-field">وجه انطباق النص المختار على وقائع الملف<textarea id="judgeApplication" maxlength="2000" placeholder="اذكر المادة والواقعة المؤثرة، وبيّن الاحتمال المقابل إذا لم تثبت الواقعة."></textarea></label></section>
+                <section class="judge-panel"><div class="judge-panel-head"><span>03</span><div><h3>تقصّي الأحكام المنشورة</h3><p>ابحث في الموقع الرسمي بنفسك. سجّل رقم الحكم وملاحظة بحثية من صياغتك بعد الاطلاع على الأصل.</p></div></div><a class="judge-official-link" href="https://www.adjd.gov.ae/sites/eservices/ar/pages/judgments.aspx" target="_blank" rel="noopener noreferrer">افتح بوابة نشر الأحكام بدائرة القضاء ـ أبوظبي ↗</a><div class="judge-form-grid"><label>رقم الحكم أو الطعن والسنة<input id="judgePrecedentRef" maxlength="100" placeholder="اكتب المرجع إذا تحققت منه في البوابة" /></label><label>رابط الحكم الرسمي، إن توفر<input id="judgePrecedentUrl" type="url" maxlength="450" placeholder="https://www.adjd.gov.ae/..." /></label></div><label class="judge-field">ملاحظة بحثية بصياغتك، دون نسخ الحكم<textarea id="judgePrecedentNote" maxlength="350" placeholder="لماذا يشبه هذا الحكم الواقعة؟ وما الفرق المهم؟"></textarea></label><p class="judge-source-explainer">المرجع المسجّل من الطالب لا يعني تحقق المنصة من وجود الحكم أو صحة نسبته أو انطباقه. لا تُدرج نص الحكم الكامل؛ اطلع عليه في بوابته الأصلية.</p></section>
+              </div>
+              <aside class="judge-side-column"><section class="judge-panel judge-draft-panel"><div class="judge-panel-head"><span>04</span><div><h3>مشروع تسبيب قابل للمراجعة</h3><p>اختر احتمالاً واذكر سببك. تُظهر المسودة ما يثبت وما يحتاج إلى تحقق.</p></div></div><label class="judge-field">النتيجة التي يرجحها الطالب<select id="judgeOutcome"><option value="review">يلزم استكمال الوقائع أو الدليل</option><option value="accept">قد يقبل الطلب إذا ثبتت شروطه</option><option value="reject">قد يرفض الطلب إذا لم تثبت شروطه</option></select></label><label class="judge-field">تعليل الترجيح والرد على أقوى دفع<textarea id="judgeReason" maxlength="1800" placeholder="لماذا؟ ما الدليل الحاسم؟ وكيف تجيب عن الخصم؟"></textarea></label><button type="button" id="judgeGenerate" class="primary-button full-width">أنشئ مشروع التسبيب</button><div id="judgeDraft" class="judge-draft-content" aria-live="polite"><div class="judge-empty">ابدأ بملف افتراضي ثم اختر مادة واكتب وجه انطباقها. ستظهر المسودة هنا مع أوجه النقص ومراجعها.</div></div><button type="button" id="judgeDownload" class="ghost-button judge-download" hidden>حمّل المشروع للمناقشة مع الأستاذ</button></section>
+                <section class="judge-panel judge-human-panel"><div class="judge-panel-head"><span>05</span><div><h3>مراجعة بشرية</h3><p>مساحة لتعليق الأستاذ أو الطالب؛ لا تثبت صفة المراجع.</p></div></div><label class="judge-field">ما الذي يحتاج إلى تصحيح أو تحقق؟<textarea id="judgeReview" maxlength="1600" placeholder="مثال: راجع نص المادة في نسخته النافذة، أو تحقّق من تاريخ الإعلان."></textarea></label><p class="judge-source-explainer">تُحفظ المدخلات التدريبية على جهازك فقط. استعمل أسماء افتراضية ولا تدرج بيانات قضية حقيقية.</p></section></aside>
+            </div>
           </section>
 
           <section class="view" id="view-court" data-title="المحكمة الافتراضية">

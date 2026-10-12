@@ -428,6 +428,7 @@
     if (view === "court") renderCourt();
     if (view === "ai") renderAI();
     if (view === "judgment") renderJudgment();
+    if (view === "judge-assistant") window.JudgeAssistant?.render();
     if (view === "book") renderBook();
     if (view === "thinking") renderThinking();
     if (view === "enforcement-book") renderEnforcementBook();
@@ -880,7 +881,7 @@
     } else {
       const missedFacts = caseData.facts.filter((fact, index) => fact.relevant && !entry.facts.includes(index)).map((fact) => fact.text);
       const missedTools = caseData.tools.filter((tool) => tool.essential && !entry.tools.includes(`${tool.kind}:${tool.id}`)).map((tool) => thinkingToolInfo(caseData, tool).title);
-      workspace.innerHTML = `<div class="thinking-work-card thinking-review"><p class="eyebrow">05 · أعد قراءة النزاع</p><h3>قارن حجتك بالمراجعة الموجّهة</h3><p>هذه أمثلة للحجج ومسار للمراجعة، وليست حكماً قضائياً ولا تقييماً آلياً لصحة صياغتك.</p><div class="thinking-feedback"><strong>قائمة مراجعة لما اخترته</strong><p>${missedFacts.length ? `وقائع تستحق العودة إليها: ${esc(missedFacts.join("، "))}.` : "رصدت الوقائع الرئيسة في هذه الواقعة."}</p><p>${missedTools.length ? `راجع أيضاً: ${esc(missedTools.join("، "))}.` : "طلبت الأدوات الأساسية لهذه الواقعة."}</p></div><div class="thinking-comparison"><article><span>سؤالك</span><p class="thinking-user-text">${esc(entry.issue)}</p><strong>صياغة استرشادية</strong><p>${esc(caseData.sample.issue)}</p></article><article><span>حجة ${esc(caseData.parties[0])}</span><p class="thinking-user-text">${esc(entry.first)}</p><strong>وجه محتمل</strong><p>${esc(caseData.sample.first)}</p></article><article><span>حجة ${esc(caseData.parties[1])}</span><p class="thinking-user-text">${esc(entry.second)}</p><strong>وجه محتمل</strong><p>${esc(caseData.sample.second)}</p></article><article><span>ترجيحك</span><p class="thinking-user-text">${esc(entry.conclusion)}</p><strong>مراجعة مشروطة</strong><p>${esc(caseData.sample.conclusion)}</p></article></div><div class="thinking-change"><strong>غيّر واقعة ثم أعد التحليل</strong><p>${esc(caseData.sample.change)}</p>${entry.variation ? `<p class="thinking-user-text">أنت اقترحت: ${esc(entry.variation)}</p>` : ""}</div><details class="thinking-teacher"><summary>سؤال متابعة للأستاذ</summary><p>${esc(caseData.sample.teacher)}</p></details><div class="thinking-review-actions"><button type="button" class="primary-button" data-thinking-ai="1">انقل حجتي إلى مساعد الصياغة ←</button><button type="button" class="ghost-button" data-thinking-reset="1">أعد تحليل هذه الواقعة</button></div></div>`;
+      workspace.innerHTML = `<div class="thinking-work-card thinking-review"><p class="eyebrow">05 · أعد قراءة النزاع</p><h3>قارن حجتك بالمراجعة الموجّهة</h3><p>هذه أمثلة للحجج ومسار للمراجعة، وليست حكماً قضائياً ولا تقييماً آلياً لصحة صياغتك.</p><div class="thinking-feedback"><strong>قائمة مراجعة لما اخترته</strong><p>${missedFacts.length ? `وقائع تستحق العودة إليها: ${esc(missedFacts.join("، "))}.` : "رصدت الوقائع الرئيسة في هذه الواقعة."}</p><p>${missedTools.length ? `راجع أيضاً: ${esc(missedTools.join("، "))}.` : "طلبت الأدوات الأساسية لهذه الواقعة."}</p></div><div class="thinking-comparison"><article><span>سؤالك</span><p class="thinking-user-text">${esc(entry.issue)}</p><strong>صياغة استرشادية</strong><p>${esc(caseData.sample.issue)}</p></article><article><span>حجة ${esc(caseData.parties[0])}</span><p class="thinking-user-text">${esc(entry.first)}</p><strong>وجه محتمل</strong><p>${esc(caseData.sample.first)}</p></article><article><span>حجة ${esc(caseData.parties[1])}</span><p class="thinking-user-text">${esc(entry.second)}</p><strong>وجه محتمل</strong><p>${esc(caseData.sample.second)}</p></article><article><span>ترجيحك</span><p class="thinking-user-text">${esc(entry.conclusion)}</p><strong>مراجعة مشروطة</strong><p>${esc(caseData.sample.conclusion)}</p></article></div><div class="thinking-change"><strong>غيّر واقعة ثم أعد التحليل</strong><p>${esc(caseData.sample.change)}</p>${entry.variation ? `<p class="thinking-user-text">أنت اقترحت: ${esc(entry.variation)}</p>` : ""}</div><details class="thinking-teacher"><summary>سؤال متابعة للأستاذ</summary><p>${esc(caseData.sample.teacher)}</p></details><div class="thinking-review-actions"><button type="button" class="primary-button" data-thinking-judge="1">حوّل القضية إلى مشروع تسبيب ←</button><button type="button" class="ghost-button" data-thinking-ai="1">انقل حجتي إلى مساعد الصياغة</button><button type="button" class="ghost-button" data-thinking-reset="1">أعد تحليل هذه الواقعة</button></div></div>`;
     }
   }
 
@@ -1542,6 +1543,16 @@
     renderCivilLawSource();
   }
 
+  window.openLawSource = function (number) {
+    const article = (CIVIL_LAW.articles || []).find((item) => item.number === Number(number));
+    if (!article) return;
+    state.lawFilter = "all";
+    state.lawSearch = "";
+    state.lawSelected = article.id;
+    saveState();
+    setView("sources");
+  };
+
   function startCivilLawQuiz() {
     state.quizQueue = Array.from({ length: (CIVIL_LAW.quiz || []).length }, (_, index) => lawQuizStartIndex + index);
     state.quizIndex = 0;
@@ -1652,6 +1663,13 @@
       if (thinkingNext) { advanceThinking(Number(thinkingNext.dataset.thinkingNext)); return; }
       const thinkingReset = event.target.closest("[data-thinking-reset]");
       if (thinkingReset) { delete state.thinkingEntries[state.thinkingCase]; saveState(); renderThinking(); return; }
+      const thinkingJudge = event.target.closest("[data-thinking-judge]");
+      if (thinkingJudge) {
+        const caseData = activeThinkingCase(), entry = activeThinkingEntry(caseData);
+        if (entry.phase !== 4 || !window.JudgeAssistant) return;
+        window.JudgeAssistant.loadThinkingCase(caseData, entry);
+        setView("judge-assistant"); return;
+      }
       const thinkingAI = event.target.closest("[data-thinking-ai]");
       if (thinkingAI) {
         const caseData = activeThinkingCase(), entry = activeThinkingEntry(caseData);
@@ -1740,10 +1758,11 @@
 
   function init() {
     bindEvents();
+    window.JudgeAssistant?.init();
     $("#thinkingCaseSearch").value = state.thinkingSearch;
     renderDashboard();
     const requestedView = new URLSearchParams(window.location.search).get("view");
-    setView(["book", "thinking"].includes(requestedView) ? requestedView : (state.view || "dashboard"));
+    setView(["book", "thinking", "judge-assistant", "sources"].includes(requestedView) ? requestedView : (state.view || "dashboard"));
   }
 
   document.addEventListener("DOMContentLoaded", init);
